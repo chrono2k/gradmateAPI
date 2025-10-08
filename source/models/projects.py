@@ -13,5 +13,5 @@ class Projects:
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'status':self.status
+            'status': self.status
         }
