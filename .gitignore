@@ -1,0 +1,7 @@
+.idea
+gradmateAPI.iml
+source/__pycache__/
+source/api/__pycache__/
+source/migrations/__pycache__/
+source/models/__pycache__/
+source/utils/__pycache__/
