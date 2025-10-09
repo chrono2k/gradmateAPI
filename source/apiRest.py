@@ -6,6 +6,7 @@ from utils.config import Config
 from utils.mysqlUtils import initialize_database
 from api.auth import auth_ns
 from api.course import course_ns
+from api.teacher import teacher_ns
 
 def create_app():
     app = Flask(__name__)
@@ -20,7 +21,7 @@ def create_app():
     )
     api.add_namespace(auth_ns, path='/auth')
     api.add_namespace(course_ns, path='/course')
-    # api.add_namespace(parking_ns, path='/parking')
+    api.add_namespace(teacher_ns, path='/teacher')
     # api.add_namespace(floor_ns, path='/floor')
     # api.add_namespace(user_ns, path='/user')
     # api.add_namespace(device_ns, path='/device')

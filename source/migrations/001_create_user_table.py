@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     `username` VARCHAR(80) NOT NULL UNIQUE,
     `authority` VARCHAR(80) NOT NULL,
     `password_hash` VARCHAR(256) NOT NULL,
-    `active` int(1) DEFAULT 1
+    status ENUM('ativo', 'inativo') DEFAULT 'ativo'
 
 );
 """

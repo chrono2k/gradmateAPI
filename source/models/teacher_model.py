@@ -1,5 +1,6 @@
 from utils.mysqlUtils import send_sql_command,connect_to_db
 
+
 class Teacher:
     def __init__(self, id, name, observation, image, user_id):
         self.id = id

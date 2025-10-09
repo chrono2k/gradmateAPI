@@ -27,7 +27,7 @@ course_update_model = course_ns.model('CourseUpdate', {
 })
 
 course_delete_model = course_ns.model('CourseDelete', {
-    'id': fields.Integer(required=True, description='ID do curso a ser removido')
+    'id': fields.Integer(required=True, description='ID do curso a ser desativado')
 })
 course_active_model = course_ns.model('CourseActive', {
     'id': fields.Integer(required=True, description='ID do curso a ser ativado')
@@ -211,7 +211,7 @@ class CourseList(Resource):
     @token_required
     @course_ns.doc('delete_course', description='Remove um curso (exclusão lógica)')
     @course_ns.expect(course_delete_model)
-    @course_ns.response(200, 'Curso removido com sucesso')
+    @course_ns.response(200, 'Curso desativado com sucesso')
     @course_ns.response(404, 'Curso não encontrado')
     def delete(self, current_user_id):
         """Remove um curso (marca como inativo)"""
@@ -234,7 +234,7 @@ class CourseList(Resource):
             if Course.delete_course(course_id):
                 return make_response(jsonify({
                     'success': True,
-                    'message': 'Curso removido com sucesso!'
+                    'message': 'Curso desativado com sucesso!'
                 }), 200)
             else:
                 return make_response(jsonify({
