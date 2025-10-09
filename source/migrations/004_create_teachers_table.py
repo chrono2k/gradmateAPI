@@ -14,18 +14,18 @@ CREATE TABLE IF NOT EXISTS teachers (
 """
 
 INSERT_VALUE_TABLE_QUERY = """
-INSERT INTO course (id, name, observation) VALUES
-(1,'fulano',"40028922", ''),
-(2,'ciclano',"40028922", ''),
-(3,'beltrano',"40028922", ''),
-(4,'deltrano',"40028922", '')
+INSERT INTO teachers (id, name, observation) VALUES
+(1,'sr. fulano',"40028922"),
+(2,'sr. ciclano',"40028922"),
+(3,'sr. beltrano',"40028922"),
+(4,'sr. deltrano',"40028922")
 """
 
 
 def run_migration():
     print("executando migration")
-    execute_migration(CREATE_TABLE_QUERY);
-    execute_migration(INSERT_VALUE_TABLE_QUERY);
+    execute_migration(CREATE_TABLE_QUERY)
+    execute_migration(INSERT_VALUE_TABLE_QUERY)
 
 if __name__ == "__main__":
     run_migration()

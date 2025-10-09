@@ -3,10 +3,10 @@ import importlib
 migrations = [
     "001_create_user_table",
     "002_create_course_table",
-    # "003_create_device_table",
-    # "004_create_config_table",
-    # "005_create_display_table",
-    # "006_create_device_event_table",
+    "003_create_students_table",
+    "004_create_teachers_table",
+    "005_create_projects_table",
+
 ]
 
 def run_all_migrations():

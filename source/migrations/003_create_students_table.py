@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS students (
 """
 
 INSERT_VALUE_TABLE_QUERY = """
-INSERT INTO course (id, name,registration, observation, status) VALUES
+INSERT INTO students (id, name,registration, observation, status) VALUES
 (1,'fulano',"40028922", '', 'ativo'),
 (2,'ciclano',"40028922", '',  'ativo'),
 (3,'beltrano',"40028922", '', 'ativo'),
@@ -28,8 +28,8 @@ INSERT INTO course (id, name,registration, observation, status) VALUES
 
 def run_migration():
     print("executando migration")
-    execute_migration(CREATE_TABLE_QUERY);
-    execute_migration(INSERT_VALUE_TABLE_QUERY);
+    execute_migration(CREATE_TABLE_QUERY)
+    execute_migration(INSERT_VALUE_TABLE_QUERY)
 
 if __name__ == "__main__":
     run_migration()

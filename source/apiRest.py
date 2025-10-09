@@ -5,6 +5,7 @@ from cors import enable_cors
 from utils.config import Config
 from utils.mysqlUtils import initialize_database
 from api.auth import auth_ns
+from api.course import course_ns
 
 def create_app():
     app = Flask(__name__)
@@ -12,7 +13,7 @@ def create_app():
     enable_cors(app)
     api = Api(app)
     api.add_namespace(auth_ns, path='/auth')
-    # api.add_namespace(dashboard_ns, path='/dashboard')
+    api.add_namespace(course_ns, path='/course')
     # api.add_namespace(parking_ns, path='/parking')
     # api.add_namespace(floor_ns, path='/floor')
     # api.add_namespace(user_ns, path='/user')

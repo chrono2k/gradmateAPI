@@ -22,7 +22,7 @@ class User:
     def find_by_username(username):
         result = send_sql_command("SELECT * FROM users WHERE username = %s",(username,))[0]
         print(result)
-        if result != "0":
+        if result != 0:
             return User(result[0], result[1], result[2],result[3],result[4])
         else:
             return None
@@ -34,7 +34,7 @@ class User:
     @staticmethod
     def find_by_id(user_id):
         result = send_sql_command("SELECT * FROM users WHERE id = %s",(user_id,))[0]
-        if result != "0":
+        if result != 0:
             return User(result[0], result[1], result[2],result[3],result[4])
         else:
             return None

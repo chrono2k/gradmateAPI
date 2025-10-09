@@ -3,7 +3,7 @@ import os
 from flask import request, jsonify, make_response
 from flask_restx import Resource, Namespace, fields
 from werkzeug.security import generate_password_hash, check_password_hash
-from models.user import User
+from models.user_model import User
 from utils.jwt_utils import encode_jwt
 from utils.config import Config
 from time import strftime, localtime

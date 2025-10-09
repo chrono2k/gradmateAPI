@@ -20,8 +20,8 @@ VALUES (1,'teste','admin', 'pbkdf2:sha256:150000$GUiqGKP4$dcf21e3db41e7fe0fe7cfa
 
 def run_migration():
     print("executando migration")
-    execute_migration(CREATE_TABLE_QUERY);
-    execute_migration(INSERT_VALUE_TABLE_QUERY);
+    execute_migration(CREATE_TABLE_QUERY)
+    execute_migration(INSERT_VALUE_TABLE_QUERY)
 
 if __name__ == "__main__":
     run_migration()

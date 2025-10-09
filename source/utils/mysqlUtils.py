@@ -57,8 +57,8 @@ def send_sql_command(sql_statement, args=None):
 
         cursor.execute(sql_statement, args)
         result = cursor.fetchall()
-
-        return result if result else "0"
+        last_id = int(cursor.lastrowid)
+        return last_id if result == () else result
 
     except Exception as e:
         print(f"[ERROR] send_sql_command: {e}")
