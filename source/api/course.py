@@ -29,6 +29,9 @@ course_update_model = course_ns.model('CourseUpdate', {
 course_delete_model = course_ns.model('CourseDelete', {
     'id': fields.Integer(required=True, description='ID do curso a ser removido')
 })
+course_active_model = course_ns.model('CourseActive', {
+    'id': fields.Integer(required=True, description='ID do curso a ser ativado')
+})
 
 course_search_model = course_ns.model('CourseSearch', {
     'name': fields.String(description='Nome do curso para buscar'),
@@ -79,8 +82,6 @@ class CourseList(Resource):
         """Lista todos os cursos"""
         try:
             status = request.args.get('status', 'ativo')
-
-            # Validar status
             if status not in ['ativo', 'inativo', 'all']:
                 return make_response(jsonify({
                     'success': False,
@@ -113,8 +114,6 @@ class CourseList(Resource):
         """Cria um novo curso"""
         try:
             data = request.get_json()
-
-            # Validações
             if not data or 'name' not in data:
                 return make_response(jsonify({
                     'success': False,
@@ -129,15 +128,11 @@ class CourseList(Resource):
                     'success': False,
                     'message': 'Nome do curso deve ter no mínimo 3 caracteres'
                 }), 400)
-
-            # Verificar se já existe
             if Course.check_course_name_exists(name):
                 return make_response(jsonify({
                     'success': False,
                     'message': 'Já existe um curso cadastrado com este nome'
                 }), 409)
-
-            # Inserir curso
             course_id = Course.insert_course(name, observation)
 
             if course_id:
@@ -179,30 +174,22 @@ class CourseList(Resource):
             course_id = data.get('id')
             name = data.get('name', '').strip() if 'name' in data else None
             observation = data.get('observation', '').strip() if 'observation' in data else None
-
-            # Verificar se curso existe
             if not Course.check_course_exists(course_id):
                 return make_response(jsonify({
                     'success': False,
                     'message': 'Curso não encontrado'
                 }), 404)
-
-            # Validar nome se informado
             if name:
                 if len(name) < 3:
                     return make_response(jsonify({
                         'success': False,
                         'message': 'Nome do curso deve ter no mínimo 3 caracteres'
                     }), 400)
-
-                # Verificar duplicidade
                 if Course.check_course_name_exists(name, exclude_id=course_id):
                     return make_response(jsonify({
                         'success': False,
                         'message': 'Já existe outro curso com este nome'
                     }), 409)
-
-            # Atualizar curso
             if Course.update_course(course_id, name, observation):
                 return make_response(jsonify({
                     'success': True,
@@ -238,16 +225,12 @@ class CourseList(Resource):
                 }), 400)
 
             course_id = data.get('id')
-
-            # Verificar se curso existe
             course = Course.select_course_by_id(course_id)
             if not course:
                 return make_response(jsonify({
                     'success': False,
                     'message': 'Curso não encontrado'
                 }), 404)
-
-            # Deletar curso (exclusão lógica)
             if Course.delete_course(course_id):
                 return make_response(jsonify({
                     'success': True,
@@ -266,6 +249,50 @@ class CourseList(Resource):
                 'error': str(e)
             }), 500)
 
+@course_ns.route('/active')
+class ActiveCourse(Resource):
+    """Endpoint para ativação de curso"""
+
+    @token_required
+    @course_ns.doc('active_course', description='Ativar um curso (Ativação)')
+    @course_ns.expect(course_active_model)
+    @course_ns.response(200, 'Curso ativado com sucesso')
+    @course_ns.response(404, 'Curso não encontrado')
+    def post(self, current_user_id):
+        """Ativa um curso (marca como ativo)"""
+        try:
+            data = request.get_json()
+
+            if not data or 'id' not in data:
+                return make_response(jsonify({
+                    'success': False,
+                    'message': 'ID do curso é obrigatório'
+                }), 400)
+
+            course_id = data.get('id')
+            course = Course.select_course_by_id(course_id)
+            if not course:
+                return make_response(jsonify({
+                    'success': False,
+                    'message': 'Curso não encontrado'
+                }), 404)
+            if Course.activate_course(course_id):
+                return make_response(jsonify({
+                    'success': True,
+                    'message': 'Curso ativado com sucesso!'
+                }), 200)
+            else:
+                return make_response(jsonify({
+                    'success': False,
+                    'message': 'Erro ao ativar curso'
+                }), 500)
+
+        except Exception as e:
+            return make_response(jsonify({
+                'success': False,
+                'message': 'Erro ao ativar curso',
+                'error': str(e)
+            }), 500)
 
 @course_ns.route('/<int:course_id>')
 class CourseDetail(Resource):
@@ -316,14 +343,10 @@ class CourseSearch(Resource):
             start_date = data.get('start_date')
             end_date = data.get('end_date')
             status = data.get('status', 'ativo')
-
-            # Buscar por nome
             if name:
                 courses = Course.select_courses_by_name(name)
-            # Buscar por data
             elif start_date or end_date:
                 courses = Course.select_courses_by_date_range(start_date, end_date, status)
-            # Buscar todos
             else:
                 courses = Course.select_all_courses(status)
 
@@ -354,8 +377,6 @@ class CourseStatistics(Resource):
         """Retorna estatísticas dos cursos"""
         try:
             stats = Course.get_course_statistics()
-
-            # Formatar último cadastro
             if stats['ultimo_cadastro']:
                 stats['ultimo_cadastro'] = stats['ultimo_cadastro'].isoformat()
 

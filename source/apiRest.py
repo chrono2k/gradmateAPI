@@ -11,7 +11,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     enable_cors(app)
-    api = Api(app)
+    api = Api(
+        app,
+        version='1.0',
+        title='GradMate API',
+        description='API para gerenciamento acadêmico',
+        doc='/api/docs'
+    )
     api.add_namespace(auth_ns, path='/auth')
     api.add_namespace(course_ns, path='/course')
     # api.add_namespace(parking_ns, path='/parking')
@@ -22,11 +28,18 @@ def create_app():
     # api.add_namespace(display_ns, path='/display')
     return app
 
+
 app = create_app()
 initialize_database()
 run_all_migrations()
 
 if __name__ == "__main__":
+    print("=" * 60)
+    print("🚀 Servidor iniciado!")
+    print("📚 API: http://localhost:5000")
+    print("📖 Documentação: http://localhost:5000/api/docs")
+    print("=" * 60)
+
     app.run(debug=False,host="0.0.0.0", port=5000)
 
 

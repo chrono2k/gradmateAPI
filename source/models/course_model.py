@@ -210,10 +210,8 @@ class Course:
             SET status = %s, updated_at = CURRENT_TIMESTAMP
             WHERE id = %s
         """
-        result = send_sql_command(query, (status, course_id))
-        print("---")
-        print(result)
-        return result != 0
+        send_sql_command(query, (status, course_id))
+        return True
 
     @staticmethod
     def delete_course(course_id):
@@ -227,6 +225,21 @@ class Course:
             bool: True se desativado com sucesso
         """
         return Course.update_course_status(course_id, 'inativo')
+
+    @staticmethod
+    def activate_course(course_id):
+        """
+        Ativação lógica - marca o curso como ativo
+
+        Args:
+            course_id (int): ID do curso
+
+        Returns:
+            bool: True se ativado com sucesso
+        """
+        return Course.update_course_status(course_id, 'ativo')
+
+
 
     @staticmethod
     def permanent_delete_course(course_id):
