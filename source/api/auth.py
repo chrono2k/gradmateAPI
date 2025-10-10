@@ -8,7 +8,7 @@ from utils.jwt_utils import encode_jwt
 from utils.config import Config
 from time import strftime, localtime
 
-auth_ns = Namespace('auth',description='Autenticação de usuário')
+auth_ns = Namespace('auth', description='Autenticação de usuário')
 
 login_model = auth_ns.model('LoginInput', {
     'username': fields.String(required=True, description='Nome de usuário'),
@@ -19,6 +19,7 @@ login_model = auth_ns.model('LoginInput', {
 token_model = auth_ns.model('LoginOutput', {
     'token': fields.String(description='JWT gerado após login bem-sucedido')
 })
+
 
 @auth_ns.route('/login/')
 class Login(Resource):

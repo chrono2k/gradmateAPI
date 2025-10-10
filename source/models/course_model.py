@@ -164,7 +164,7 @@ class Course:
         Args:
             course_id (int): ID do curso
             name (str, optional): Novo nome do curso
-            observation (str, optional): Nova observação
+            observation (str, optional): Observação sobre o curso
 
         Returns:
             bool: True se atualizado com sucesso, False caso contrário
@@ -287,13 +287,13 @@ class Course:
         if exclude_id:
             query = """
                 SELECT id FROM course 
-                WHERE name = %s AND id != %s AND status = 'ativo'
+                WHERE name = %s AND id != %s
             """
             result = send_sql_command(query, (name, exclude_id))
         else:
             query = """
                 SELECT id FROM course 
-                WHERE name = %s AND status = 'ativo'
+                WHERE name = %s
             """
             result = send_sql_command(query, (name,))
 

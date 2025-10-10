@@ -15,10 +15,10 @@ CREATE TABLE IF NOT EXISTS projects (
 
 INSERT_VALUE_TABLE_QUERY = """
 INSERT INTO projects (id, name, description) VALUES
-(1,'Projeto 1',"Projeto 1"),
-(2,'Projeto 2',"Projeto 2"),
-(3,'Projeto 3',"Projeto 3"),
-(4,'Projeto 4',"Projeto 4")
+(1,'Projeto 1','Projeto 1'),
+(2,'Projeto 2','Projeto 2'),
+(3,'Projeto 3','Projeto 3'),
+(4,'Projeto 4','Projeto 4');
 """
 
 

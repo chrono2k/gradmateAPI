@@ -13,16 +13,16 @@ CREATE TABLE IF NOT EXISTS students (
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_nome (name),
     INDEX idx_status (status),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
 INSERT_VALUE_TABLE_QUERY = """
-INSERT INTO students (id, name,registration, observation, status) VALUES
-(1,'fulano',"40028922", '', 'ativo'),
-(2,'ciclano',"40028922", '',  'ativo'),
-(3,'beltrano',"40028922", '', 'ativo'),
-(4,'deltrano',"40028922", '', 'ativo')
+INSERT INTO students (id, name,registration, observation, status,user_id) VALUES
+(1,'fulano','40028922', '', 'ativo',6),
+(2,'ciclano','40028922', '',  'ativo',7),
+(3,'beltrano','40028922', '', 'ativo',8),
+(4,'deltrano','40028922', '', 'ativo',9)
 """
 
 

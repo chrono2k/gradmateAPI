@@ -9,16 +9,16 @@ CREATE TABLE IF NOT EXISTS teachers (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_nome (name),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
 INSERT_VALUE_TABLE_QUERY = """
-INSERT INTO teachers (id, name, observation) VALUES
-(1,'sr. fulano',"40028922"),
-(2,'sr. ciclano',"40028922"),
-(3,'sr. beltrano',"40028922"),
-(4,'sr. deltrano',"40028922")
+INSERT INTO teachers (id, name, observation,user_id) VALUES
+(1,'sr. fulano','40028922',2),
+(2,'sr. ciclano','40028922',3),
+(3,'sr. beltrano','40028922',4),
+(4,'sr. deltrano','40028922',5)
 """
 
 

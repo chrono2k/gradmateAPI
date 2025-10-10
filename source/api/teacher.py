@@ -78,7 +78,7 @@ class TeacherList(Resource):
     def get(self, current_user_id):
         """Lista todos os professores"""
         try:
-            teachers = Teacher.select_all_teachers()
+            teachers = Teacher.select_all_teacher()
             response = [format_teacher_response(teacher) for teacher in teachers]
 
             return make_response(jsonify({
@@ -130,7 +130,7 @@ class TeacherList(Resource):
                     'success': False,
                     'message': 'Email do professor deve ter no mínimo 3 caracteres'
                 }), 400)
-            if Teacher.check_teacher_email_exists(name):
+            if Teacher.check_teacher_email_exists(email):
                 return make_response(jsonify({
                     'success': False,
                     'message': 'Já existe um professor cadastrado com este email'
@@ -187,7 +187,7 @@ class TeacherList(Resource):
                 if len(name) < 3:
                     return make_response(jsonify({
                         'success': False,
-                        'message': 'Nome do curso professor ter no mínimo 3 caracteres'
+                        'message': 'Nome do professor deve ter no mínimo 3 caracteres'
                     }), 400)
                 Teacher.update_name(teacher_id, name)
             if email:
@@ -200,13 +200,13 @@ class TeacherList(Resource):
             Teacher.update_observation_and_image(teacher_id, observation,image)
             return make_response(jsonify({
                 'success': True,
-                'message': 'Curso atualizado com sucesso!'
+                'message': 'Professor atualizado com sucesso!'
             }), 200)
 
         except Exception as e:
             return make_response(jsonify({
                 'success': False,
-                'message': 'Erro ao atualizar curso',
+                'message': 'Erro ao atualizar professor',
                 'error': str(e)
             }), 500)
 
