@@ -11,7 +11,7 @@ class Student:
             list: Lista de tuplas com os dados dos alunos
         """
         query = """
-            SELECT id, name, registration, observation, image, user_id, created_at, updated_at 
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
             FROM students 
             ORDER BY name ASC
         """
@@ -29,7 +29,7 @@ class Student:
             tuple: Dados do aluno ou None se não encontrado
         """
         query = """
-            SELECT id, name, registration, observation, image, user_id, created_at, updated_at 
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
             FROM students 
             WHERE id = %s
         """
@@ -48,7 +48,7 @@ class Student:
             list: Lista de alunos encontrados
         """
         query = """
-            SELECT id, name, registration, observation, image, user_id, created_at, updated_at 
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
             FROM students 
             WHERE name LIKE %s
             ORDER BY name ASC
@@ -70,7 +70,7 @@ class Student:
         """
         if start_date and end_date:
             query = """
-                SELECT id, name, registration, observation, image, user_id, created_at, updated_at 
+                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
                 FROM students 
                 WHERE DATE(created_at) BETWEEN %s AND %s
                 ORDER BY created_at DESC
@@ -78,7 +78,7 @@ class Student:
             return send_sql_command(query, (start_date, end_date))
         elif start_date:
             query = """
-                SELECT id, name, registration, observation, image, user_id, created_at, updated_at
+                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at
                 FROM students 
                 WHERE DATE(created_at) >= %s
                 ORDER BY created_at DESC
@@ -86,7 +86,7 @@ class Student:
             return send_sql_command(query, (start_date))
         elif end_date:
             query = """
-                SELECT id, name, registration, observation, image, user_id, created_at, updated_at
+                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at
                 FROM students 
                 WHERE DATE(created_at) <= %s
                 ORDER BY created_at DESC
@@ -143,7 +143,7 @@ class Student:
                 SET status = %s
                 WHERE id = %s
             """
-            send_sql_command(query, (status, student[5]))
+            send_sql_command(query, (status, student[6]))
             return True
         return False
 
@@ -186,7 +186,7 @@ class Student:
                 SET username = %s
                 WHERE id = %s
             """
-            send_sql_command(query, (email, student[5]))
+            send_sql_command(query, (email, student[6]))
             return True
         return False
 
@@ -289,7 +289,7 @@ class Student:
                     SELECT id FROM users 
                     WHERE username = %s AND id != %s
                 """
-                result = send_sql_command(query, (email, student[5]))
+                result = send_sql_command(query, (email, student[6]))
         else:
             query = """
                 SELECT id FROM users 

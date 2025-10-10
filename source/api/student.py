@@ -67,9 +67,10 @@ def format_student_response(student_data):
         'registration': student_data[2],
         'observation': student_data[3],
         'image': student_data[4],
-        'user': User.select_user_by_id(student_data[5]).to_dict(),
-        'created_at': student_data[6].isoformat() if student_data[6] else None,
-        'updated_at': student_data[7].isoformat() if student_data[7] else None
+        'status': student_data[5],
+        'user': User.select_user_by_id(student_data[6]).to_dict(),
+        'created_at': student_data[7].isoformat() if student_data[7] else None,
+        'updated_at': student_data[8].isoformat() if student_data[8] else None
     }
 
 
