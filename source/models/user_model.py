@@ -2,19 +2,19 @@ from utils.mysqlUtils import send_sql_command,connect_to_db
 
 
 class User:
-    def __init__(self, id, username, authority, password_hash, active):
+    def __init__(self, id, username, authority, password_hash, status):
         self.id = id
         self.username = username
         self.authority = authority
         self.password_hash = password_hash
-        self.active = active
+        self.status = status
 
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
             'authority': self.authority,
-            'active': self.active
+            'status': self.status
         }
 
 
@@ -38,6 +38,30 @@ class User:
             return User(result[0], result[1], result[2],result[3],result[4])
         else:
             return None
+
+    @staticmethod
+    def select_user_by_id(user_id):
+        """
+        Busca um professor específico por ID
+
+        Args:
+            user_id (int): ID do professor
+
+        Returns:
+            tuple: Dados do professor ou None se não encontrado
+        """
+        query = """
+            SELECT * FROM users WHERE id = %s
+        """
+        print("ss")
+        result = send_sql_command(query, (user_id,))[0]
+        print(result)
+        if result != 0:
+            return User(result[0], result[1], result[2], result[3], result[4])
+        else:
+            return None
+
+
 
     @staticmethod
     def get_all():

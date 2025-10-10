@@ -17,6 +17,25 @@ class Course:
         self.status = status
         self.created_at = created_at
 
+    def format_course_response(course_data):
+        """
+        Formata os dados do curso para resposta da API
+
+        Args:
+            course_data (tuple): Tupla com dados do curso do banco
+
+        Returns:
+            dict: Dicionário formatado
+        """
+        return {
+            'id': course_data[0],
+            'name': course_data[1],
+            'observation': course_data[2],
+            'status': course_data[3],
+            'created_at': course_data[4].isoformat() if course_data[4] else None,
+            'updated_at': course_data[5].isoformat() if course_data[5] else None
+        }
+
     def to_dict(self):
         return {
             'id': self.id,

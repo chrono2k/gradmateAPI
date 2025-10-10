@@ -2,6 +2,7 @@ from flask import request, jsonify, make_response
 from flask_restx import Resource, Namespace, fields
 from decorators import token_required
 from models.teacher_model import Teacher
+from models.user_model import User
 from datetime import datetime
 
 teacher_ns = Namespace('teacher', description='Gerenciamento de professores')
@@ -60,7 +61,7 @@ def format_teacher_response(teacher_data):
         'name': teacher_data[1],
         'observation': teacher_data[2],
         'image': teacher_data[3],
-        'user_id': teacher_data[4],
+        'user': User.select_user_by_id(teacher_data[4]).to_dict(),
         'created_at': teacher_data[5].isoformat() if teacher_data[5] else None,
         'updated_at': teacher_data[6].isoformat() if teacher_data[6] else None
     }
@@ -78,7 +79,9 @@ class TeacherList(Resource):
     def get(self, current_user_id):
         """Lista todos os professores"""
         try:
+            print('s')
             teachers = Teacher.select_all_teacher()
+            print(teachers)
             response = [format_teacher_response(teacher) for teacher in teachers]
 
             return make_response(jsonify({
@@ -191,7 +194,7 @@ class TeacherList(Resource):
                     }), 400)
                 Teacher.update_name(teacher_id, name)
             if email:
-                if Teacher.check_teacher_email_exists(email, exclude_id=teacher_id):
+                if Teacher.check_teacher_email_exists(email, teacher_id=teacher_id):
                     return make_response(jsonify({
                         'success': False,
                         'message': 'Já existe outro professor com este email'
@@ -297,7 +300,7 @@ class ActiveTeacher(Resource):
             }), 500)
 
 @teacher_ns.route('/<int:teacher_id>')
-class teacherDetail(Resource):
+class TeacherDetail(Resource):
     """Endpoints para busca de professores específico"""
 
     @token_required
@@ -329,7 +332,7 @@ class teacherDetail(Resource):
 
 
 @teacher_ns.route('/search')
-class CourseSearch(Resource):
+class TeacherSearch(Resource):
     """Endpoints para busca avançada de professores"""
 
     @token_required

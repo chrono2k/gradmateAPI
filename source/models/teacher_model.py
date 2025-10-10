@@ -3,23 +3,6 @@ from werkzeug.security import generate_password_hash
 
 
 class Teacher:
-    def __init__(self, id, name, observation, image, user_id):
-        self.id = id
-        self.name = name
-        self.observation = observation
-        self.image = image
-        self.user_id = user_id
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'observation': self.observation,
-            'image': self.image,
-            'user_id': self.user_id
-        }
-
-
     @staticmethod
     def select_all_teacher():
         """
@@ -29,7 +12,7 @@ class Teacher:
             list: Lista de tuplas com os dados dos professores
         """
         query = """
-            SELECT id, name, observation, image, user_id, created_at 
+            SELECT id, name, observation, image, user_id, created_at, updated_at 
             FROM teachers 
             ORDER BY name ASC
         """
@@ -47,7 +30,7 @@ class Teacher:
             tuple: Dados do professor ou None se não encontrado
         """
         query = """
-            SELECT id, name, observation, image, user_id, created_at 
+            SELECT id, name, observation, image, user_id, created_at, updated_at 
             FROM teachers 
             WHERE id = %s
         """
@@ -66,7 +49,7 @@ class Teacher:
             list: Lista de professores encontrados
         """
         query = """
-            SELECT id, name, observation, image, user_id, created_at 
+            SELECT id, name, observation, image, user_id, created_at, updated_at 
             FROM teachers 
             WHERE name LIKE %s
             ORDER BY name ASC
@@ -88,7 +71,7 @@ class Teacher:
         """
         if start_date and end_date:
             query = """
-                SELECT id, name, observation, image, user_id, created_at 
+                SELECT id, name, observation, image, user_id, created_at, updated_at 
                 FROM teachers 
                 WHERE DATE(created_at) BETWEEN %s AND %s
                 ORDER BY created_at DESC
@@ -96,7 +79,7 @@ class Teacher:
             return send_sql_command(query, (start_date, end_date))
         elif start_date:
             query = """
-                SELECT id, name, observation, image, user_id, created_at 
+                SELECT id, name, observation, image, user_id, created_at, updated_at
                 FROM teachers 
                 WHERE DATE(created_at) >= %s
                 ORDER BY created_at DESC
@@ -104,7 +87,7 @@ class Teacher:
             return send_sql_command(query, (start_date))
         elif end_date:
             query = """
-                SELECT id, name, observation, image, user_id, created_at 
+                SELECT id, name, observation, image, user_id, created_at, updated_at
                 FROM teachers 
                 WHERE DATE(created_at) <= %s
                 ORDER BY created_at DESC
@@ -139,48 +122,6 @@ class Teacher:
             result = send_sql_command(query, (name, observation, image, user_id))
             return result if result != 0 else None
         return None
-
-    @staticmethod
-    def update_teacher(teacher_id, name=None, observation=None, image=None):
-        """
-        Atualiza os dados de um professor
-
-        Args:
-            teacher_id (int): ID do professor
-            name (str, optional): Novo nome do professor
-            observation (str, optional): Observação sobre o professor
-            image (str, optional): Nova imagem
-
-        Returns:
-            bool: True se atualizado com sucesso, False caso contrário
-        """
-        updates = []
-        params = []
-
-        if name is not None:
-            updates.append("name = %s")
-            params.append(name)
-
-        if observation is not None:
-            updates.append("observation = %s")
-            params.append(observation)
-
-        if image is not None:
-            updates.append("image = %s")
-            params.append(image)
-
-        if not updates:
-            return False
-
-        params.append(teacher_id)
-        query = f"""
-            UPDATE teachers 
-            SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-        """
-
-        send_sql_command(query, tuple(params))
-        return True
 
     @staticmethod
     def update_teacher_status(teacher_id, status):
