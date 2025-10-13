@@ -5,11 +5,13 @@ CREATE TABLE IF NOT EXISTS projects (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT NULL,
+    course_id INT,
     observation TEXT NULL,
     status ENUM('Pré-projeto', 'Qualificação','Defesa','Finalizado','Trancado') DEFAULT 'Pré-projeto',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_nome (name)
+    INDEX idx_nome (name),
+    FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 

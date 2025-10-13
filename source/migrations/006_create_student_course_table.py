@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS student_course (
 """
 
 INSERT_VALUE_TABLE_QUERY = """
-INSERT INTO projects (id, name, description) VALUES
+INSERT INTO student_course (id, student_id, course_id) VALUES
 (1,1,1),
 (2,2,1),
 (3,3,2),
