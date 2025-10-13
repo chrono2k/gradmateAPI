@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS students (
     name VARCHAR(255) NOT NULL,
     registration TEXT NULL,
     observation TEXT NULL,
+    semester varchar(20) NULL,
+    telephone varchar(20),
     image TEXT NULL,
     user_id INT,
     status ENUM('formado', 'cursando') DEFAULT 'cursando',

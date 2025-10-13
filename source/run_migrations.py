@@ -6,6 +6,10 @@ migrations = [
     "003_create_students_table",
     "004_create_teachers_table",
     "005_create_projects_table",
+    "006_create_student_course_table",
+    "007_create_student_project_table",
+    "008_create_teacher_course_table",
+    "009_create_teacher_project_table",
 
 ]
 

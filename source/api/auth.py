@@ -32,7 +32,7 @@ class Login(Resource):
         password = data.get('password')
         user = User.find_by_username(username)
         print(generate_password_hash("teste"))
-        if user and check_password_hash(user.password_hash, password) and user.active:
+        if user and check_password_hash(user.password_hash, password) and user.status == 'ativo':
             token = encode_jwt({
                 'username': user.username,
                 'id': user.id,
