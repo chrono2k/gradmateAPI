@@ -53,9 +53,7 @@ class User:
         query = """
             SELECT * FROM users WHERE id = %s
         """
-        print("ss")
         result = send_sql_command(query, (user_id,))[0]
-        print(result)
         if result != 0:
             return User(result[0], result[1], result[2], result[3], result[4])
         else:

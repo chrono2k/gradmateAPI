@@ -18,6 +18,26 @@ class Student:
         return send_sql_command(query, ())
 
     @staticmethod
+    def find_all_by_project(project_id):
+        """
+         Busca todos os alunos que estão em um determinado projeto
+
+        Args:
+            project_id (int): ID do projeto
+
+         Returns:
+             list: Lista de tuplas com os dados dos alunos
+         """
+        query = """
+            SELECT s.id, s.name, s.registration, s.observation, s.image, s.status, s.user_id, s.created_at, s.updated_at 
+            FROM students s
+            INNER JOIN student_project sp ON s.id = sp.student_id
+            WHERE sp.project_id = %s
+        """
+        return send_sql_command(query, (project_id,))
+
+
+    @staticmethod
     def select_student_by_id(student_id):
         """
         Busca um aluno específico por ID

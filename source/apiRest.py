@@ -8,6 +8,8 @@ from api.auth import auth_ns
 from api.course import course_ns
 from api.teacher import teacher_ns
 from api.student import student_ns
+from api.project import project_ns
+from api.report import report_ns
 
 def create_app():
     app = Flask(__name__)
@@ -24,7 +26,8 @@ def create_app():
     api.add_namespace(course_ns, path='/course')
     api.add_namespace(teacher_ns, path='/teacher')
     api.add_namespace(student_ns, path='/student')
-    # api.add_namespace(user_ns, path='/user')
+    api.add_namespace(project_ns, path='/project')
+    api.add_namespace(report_ns, path='/report')
     # api.add_namespace(device_ns, path='/device')
     # api.add_namespace(config_ns, path='/config')
     # api.add_namespace(display_ns, path='/display')

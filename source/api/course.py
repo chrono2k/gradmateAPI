@@ -58,6 +58,8 @@ def format_course_response(course_data):
     Returns:
         dict: Dicionário formatado
     """
+    if not course_data:
+        return None
     return {
         'id': course_data[0],
         'name': course_data[1],

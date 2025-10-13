@@ -19,6 +19,26 @@ class Teacher:
         return send_sql_command(query, ())
 
     @staticmethod
+    def find_all_by_project(project_id):
+        """
+         Busca todos os professores que estão em um determinado projeto
+
+        Args:
+            project_id (int): ID do projeto
+
+         Returns:
+             list: Lista de tuplas com os dados dos professores
+         """
+        query = """
+            SELECT t.id, t.name, t.observation, t.image, t.user_id, t.created_at, t.updated_at 
+            FROM teachers t
+            INNER JOIN teacher_project tp ON t.id = tp.teacher_id
+            WHERE tp.project_id = %s
+        """
+        return send_sql_command(query, (project_id,))
+
+
+    @staticmethod
     def select_teacher_by_id(teacher_id):
         """
         Busca um professor específico por ID

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS report (
     id INT AUTO_INCREMENT PRIMARY KEY,
     description TEXT NULL,
     pendency TEXT NULL,
+    status ENUM('pendente', 'concluido') DEFAULT 'pendente',
     next_steps TEXT NULL,
     local TEXT NULL,
     feedback TEXT NULL,
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS report (
 def run_migration():
     print("executando migration")
     execute_migration(CREATE_TABLE_QUERY)
+
 
 if __name__ == "__main__":
     run_migration()

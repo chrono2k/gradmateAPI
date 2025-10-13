@@ -33,8 +33,8 @@ def connect_to_db() -> object:
 
 
 def execute_migration(table_query):
-    print("--------------------------------------")
-    connection,cursor = connect_to_db()
+    print("-" * 60)
+    connection, cursor = connect_to_db()
     try:
         cursor.execute(table_query)
         print("Migração executada com sucesso.")
