@@ -120,7 +120,8 @@ class ProjectList(Resource):
     def get(self, current_user_id):
         """Lista todos os projetos"""
         try:
-            projects = Project.select_all_projects()
+            status = request.args.get('status', 'Pré-projeto')
+            projects = Project.select_all_projects(status)
             response = [format_project_response(project) for project in projects]
 
             return make_response(jsonify({

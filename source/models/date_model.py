@@ -76,7 +76,7 @@ class DateStatus:
         Busca todas as datas com um status específico
 
         Args:
-            status (int): Status (1, 2 ou 3)
+            status (int): Status (entre 1 e 6)
 
         Returns:
             list: Lista de datas com o status
@@ -126,7 +126,7 @@ class DateStatus:
 
         Args:
             date_str (str): Data em formato YYYY-MM-DD
-            status (int): Status (1, 2 ou 3)
+            status (int): Status (entre 1 e 6)
 
         Returns:
             int: ID do status inserido ou None em caso de erro
@@ -145,7 +145,7 @@ class DateStatus:
 
         Args:
             status_id (int): ID do status de data
-            status (int): Novo status (1, 2 ou 3)
+            status (int): Novo status (entre 1 e 6)
 
         Returns:
             bool: True se atualizado com sucesso
@@ -288,7 +288,10 @@ class DateStatus:
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as status_1,
                     SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as status_2,
-                    SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as status_3
+                    SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as status_3,
+                    SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as status_4,
+                    SUM(CASE WHEN status = 5 THEN 1 ELSE 0 END) as status_5,
+                    SUM(CASE WHEN status = 6 THEN 1 ELSE 0 END) as status_6
                 FROM date_status
                 WHERE YEAR(date) = %s
             """
@@ -299,7 +302,10 @@ class DateStatus:
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as status_1,
                     SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as status_2,
-                    SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as status_3
+                    SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as status_3,
+                    SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as status_4,
+                    SUM(CASE WHEN status = 5 THEN 1 ELSE 0 END) as status_5,
+                    SUM(CASE WHEN status = 6 THEN 1 ELSE 0 END) as status_6
                 FROM date_status
             """
             result = send_sql_command(query)
@@ -310,13 +316,19 @@ class DateStatus:
                 'total': row[0],
                 'status_1': row[1] or 0,
                 'status_2': row[2] or 0,
-                'status_3': row[3] or 0
+                'status_3': row[3] or 0,
+                'status_4': row[4] or 0,
+                'status_5': row[5] or 0,
+                'status_6': row[6] or 0
             }
         return {
             'total': 0,
             'status_1': 0,
             'status_2': 0,
-            'status_3': 0
+            'status_3': 0,
+            'status_4': 0,
+            'status_5': 0,
+            'status_6': 0
         }
 
     @staticmethod

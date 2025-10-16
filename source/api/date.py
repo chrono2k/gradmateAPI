@@ -9,19 +9,19 @@ date_status_ns = Namespace('date-status', description='Gerenciamento de status d
 date_status_model = date_status_ns.model('DateStatus', {
     'id': fields.Integer(description='ID do status'),
     'date': fields.String(required=True, description='Data (YYYY-MM-DD)'),
-    'status': fields.Integer(required=True, description='Status (1, 2 ou 3)', enum=[1, 2, 3]),
+    'status': fields.Integer(required=True, description='Status (1, 2, 3, 4, 5 ou 6)', enum=[1, 2, 3]),
     'created_at': fields.DateTime(description='Data de criação'),
     'updated_at': fields.DateTime(description='Data de atualização')
 })
 
 date_status_create_model = date_status_ns.model('DateStatusCreate', {
     'date': fields.String(required=True, description='Data (YYYY-MM-DD)'),
-    'status': fields.Integer(required=True, description='Status (1, 2 ou 3)', enum=[1, 2, 3], min=1, max=3)
+    'status': fields.Integer(required=True, description='Status (1, 2, 3, 4, 5 ou 6)', enum=[1, 2, 3], min=1, max=6)
 })
 
 date_status_update_model = date_status_ns.model('DateStatusUpdate', {
     'date': fields.String(required=True, description='Data (YYYY-MM-DD)'),
-    'status': fields.Integer(required=True, description='Status (1, 2 ou 3)', enum=[1, 2, 3], min=1, max=3)
+    'status': fields.Integer(required=True, description='Status (1, 2, 3, 4, 5 ou 6)', enum=[1, 2, 3], min=1, max=6)
 })
 
 date_status_delete_model = date_status_ns.model('DateStatusDelete', {
@@ -32,7 +32,10 @@ date_status_statistics_model = date_status_ns.model('DateStatusStatistics', {
     'total': fields.Integer(description='Total de datas com status'),
     'status_1': fields.Integer(description='Total com status 1'),
     'status_2': fields.Integer(description='Total com status 2'),
-    'status_3': fields.Integer(description='Total com status 3')
+    'status_3': fields.Integer(description='Total com status 3'),
+    'status_4': fields.Integer(description='Total com status 4'),
+    'status_5': fields.Integer(description='Total com status 5'),
+    'status_6': fields.Integer(description='Total com status 6')
 })
 
 
@@ -119,10 +122,10 @@ class DateStatusList(Resource):
                     'message': 'Data deve estar no formato YYYY-MM-DD'
                 }), 400)
 
-            if status not in [1, 2, 3]:
+            if status not in [1, 2, 3, 4, 5, 6]:
                 return make_response(jsonify({
                     'success': False,
-                    'message': 'Status deve ser 1, 2 ou 3'
+                    'message': 'Status deve estar entre 1 e 6'
                 }), 400)
 
             status_id = DateStatus.insert_date_status(date_str, status)
@@ -171,10 +174,10 @@ class DateStatusList(Resource):
                     'message': 'Data deve estar no formato YYYY-MM-DD'
                 }), 400)
 
-            if status not in [1, 2, 3]:
+            if status not in [1, 2, 3, 4, 5, 6]:
                 return make_response(jsonify({
                     'success': False,
-                    'message': 'Status deve ser 1, 2 ou 3'
+                    'message': 'Status deve estar entre 1 e 6'
                 }), 400)
 
             if DateStatus.update_date_status_by_date(date_str, status):
@@ -338,10 +341,10 @@ class DateStatusByStatus(Resource):
     def get(self, current_user_id, status_num):
         """Retorna todas as datas com um status específico"""
         try:
-            if status_num not in [1, 2, 3]:
+            if status_num not in [1, 2, 3, 4, 5, 6]:
                 return make_response(jsonify({
                     'success': False,
-                    'message': 'Status deve ser 1, 2 ou 3'
+                    'message': 'Status deve estar entre 1 e 6'
                 }), 400)
 
             statuses = DateStatus.select_date_statuses_by_status(status_num)
