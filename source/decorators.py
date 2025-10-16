@@ -6,10 +6,10 @@ from utils.jwt_utils import decode_jwt
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        return f(*args, current_user_id=1, **kwargs)
+        # return f(*args, current_user_id=1, **kwargs)
 
         token = request.headers.get('authorization')
-
+        print("x"*60)
         if not token:
             return make_response(jsonify({'message': 'Token is missing!'}), 403)
         try:

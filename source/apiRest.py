@@ -10,6 +10,8 @@ from api.teacher import teacher_ns
 from api.student import student_ns
 from api.project import project_ns
 from api.report import report_ns
+from api.date import date_status_ns
+
 
 def create_app():
     app = Flask(__name__)
@@ -28,9 +30,7 @@ def create_app():
     api.add_namespace(student_ns, path='/student')
     api.add_namespace(project_ns, path='/project')
     api.add_namespace(report_ns, path='/report')
-    # api.add_namespace(device_ns, path='/device')
-    # api.add_namespace(config_ns, path='/config')
-    # api.add_namespace(display_ns, path='/display')
+    api.add_namespace(date_status_ns, path='/date')
     return app
 
 

@@ -6,7 +6,8 @@ def initialize_database():
         connection = sqlconnector.Connection(
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
-            password=Config.MYSQL_PASSWORD
+            password=Config.MYSQL_PASSWORD,
+            port=Config.MYSQL_PORT
         )
         cursor = connection.cursor()
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {Config.MYSQL_DB}")
@@ -23,7 +24,8 @@ def connect_to_db() -> object:
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
             password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
         )
         cursor = connection.cursor()
         return connection, cursor

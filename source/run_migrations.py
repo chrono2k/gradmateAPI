@@ -11,6 +11,7 @@ migrations = [
     "008_create_teacher_course_table",
     "009_create_teacher_project_table",
     "010_create_report_table",
+    "011_create_calendar_table",
 
 ]
 

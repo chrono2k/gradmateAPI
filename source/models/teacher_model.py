@@ -58,6 +58,25 @@ class Teacher:
         return result[0] if result != 0 else None
 
     @staticmethod
+    def select_teacher_by_user_id(user_id):
+        """
+        Busca um professor específico por ID de usuario
+
+        Args:
+            user_id (int): ID do professor
+
+        Returns:
+            tuple: Dados do professor ou None se não encontrado
+        """
+        query = """
+            SELECT id, name, observation, image, user_id, created_at, updated_at 
+            FROM teachers 
+            WHERE user_id = %s
+        """
+        result = send_sql_command(query, (user_id,))
+        return result[0] if result != 0 else None
+
+    @staticmethod
     def select_teacher_by_name(name):
         """
         Busca professor por nome (busca parcial)

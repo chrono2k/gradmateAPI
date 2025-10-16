@@ -32,6 +32,11 @@ def format_report_response(report_data):
     Returns:
         dict: Dicionário formatado
     """
+    teacher = ""
+    if report_data[7] is not None:
+        teacher = format_teacher_response(Teacher.select_teacher_by_id(report_data[7]))
+
+    print(report_data)
     return {
         'id': report_data[0],
         'description': report_data[1],
@@ -40,8 +45,9 @@ def format_report_response(report_data):
         'next_steps': report_data[4],
         'local': report_data[5],
         'feedback': report_data[6],
-        'teacher': format_teacher_response(Teacher.select_teacher_by_id(report_data[7])),
-        'created_at': report_data[8].isoformat() if report_data[8] else None,
-        'updated_at': report_data[9].isoformat() if report_data[9] else None
+        'teacher': teacher,
+        'project_id': report_data[8],
+        'created_at': report_data[9].isoformat() if report_data[9] else None,
+        'updated_at': report_data[10].isoformat() if report_data[10] else None
     }
 
