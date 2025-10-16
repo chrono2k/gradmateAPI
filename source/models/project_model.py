@@ -85,13 +85,26 @@ class Project:
         """Busca todos os professores do projeto"""
         query = """
             SELECT t.id, t.name, t.observation, t.image, t.user_id,
-                   t.created_at, t.updated_at
+                   t.created_at, t.updated_at, tp.role
             FROM teachers t
-            INNER JOIN teacher_project pt ON pt.teacher_id = t.id
-            WHERE pt.project_id = %s
+            INNER JOIN teacher_project tp ON tp.teacher_id = t.id
+            WHERE tp.project_id = %s
             ORDER BY t.name ASC
         """
         return send_sql_command(query, (project_id,))
+
+    @staticmethod
+    def get_project_teachers_by_role(project_id, role):
+        """Busca professores por role (advisor/guest)"""
+        query = """
+            SELECT t.id, t.name, t.observation, t.image, t.user_id,
+                   t.created_at, t.updated_at, tp.role
+            FROM teachers t
+            INNER JOIN teacher_project tp ON tp.teacher_id = t.id
+            WHERE tp.project_id = %s AND tp.role = %s
+            ORDER BY t.name ASC
+        """
+        return send_sql_command(query, (project_id, role))
 
     @staticmethod
     def get_project_students(project_id):
@@ -182,7 +195,9 @@ class Project:
         """Verifica se um projeto existe"""
         query = "SELECT id FROM projects WHERE id = %s"
         result = send_sql_command(query, (project_id,))
-        return len(result) > 0
+        if result in (0, "0"):
+            return False
+        return isinstance(result, (list, tuple)) and len(result) > 0
 
     # ===== TEACHERS =====
 
@@ -194,6 +209,16 @@ class Project:
             VALUES (%s, %s)
         """
         result = send_sql_command(query, (project_id, teacher_id))
+        return result is not None
+
+    @staticmethod
+    def add_teacher_to_project_with_role(project_id, teacher_id, role='advisor'):
+        """Adiciona um professor ao projeto com role"""
+        query = """
+            INSERT INTO teacher_project (project_id, teacher_id, role)
+            VALUES (%s, %s, %s)
+        """
+        result = send_sql_command(query, (project_id, teacher_id, role))
         return result is not None
 
     @staticmethod
@@ -214,7 +239,31 @@ class Project:
             WHERE project_id = %s AND teacher_id = %s
         """
         result = send_sql_command(query, (project_id, teacher_id))
-        return len(result) > 0
+        if result in (0, "0"):
+            return False
+        return isinstance(result, (list, tuple)) and len(result) > 0
+
+    @staticmethod
+    def check_teacher_in_project_with_role(project_id, teacher_id, role):
+        """Verifica se um professor já está no projeto com a role informada"""
+        query = """
+            SELECT id FROM teacher_project
+            WHERE project_id = %s AND teacher_id = %s AND role = %s
+        """
+        result = send_sql_command(query, (project_id, teacher_id, role))
+        if result in (0, "0"):
+            return False
+        return isinstance(result, (list, tuple)) and len(result) > 0
+
+    @staticmethod
+    def remove_guest_from_project(project_id, teacher_id):
+        """Remove relação de convidado (role=guest)"""
+        query = """
+            DELETE FROM teacher_project
+            WHERE project_id = %s AND teacher_id = %s AND role = 'guest'
+        """
+        result = send_sql_command(query, (project_id, teacher_id))
+        return result is not None
 
     # ===== STUDENTS =====
 

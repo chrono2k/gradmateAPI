@@ -7,6 +7,7 @@ from models.user_model import User
 from utils.jwt_utils import encode_jwt
 from utils.config import Config
 from time import strftime, localtime
+from decorators import token_required
 
 auth_ns = Namespace('auth', description='Autenticação de usuário')
 
@@ -18,6 +19,32 @@ login_model = auth_ns.model('LoginInput', {
 
 token_model = auth_ns.model('LoginOutput', {
     'token': fields.String(description='JWT gerado após login bem-sucedido')
+})
+
+# ===== Admin models =====
+user_out_model = auth_ns.model('User', {
+    'id': fields.Integer,
+    'username': fields.String,
+    'authority': fields.String(enum=['admin', 'teacher', 'student']),
+    'status': fields.String(enum=['ativo', 'inativo'])
+})
+
+user_create_model = auth_ns.model('UserCreate', {
+    'username': fields.String(required=True, description='Login do usuário (email)'),
+    'password': fields.String(required=True, description='Senha inicial'),
+    'authority': fields.String(required=True, description='Papel do usuário', enum=['admin', 'teacher', 'student'])
+})
+
+user_update_role_model = auth_ns.model('UserUpdateRole', {
+    'authority': fields.String(required=True, enum=['admin', 'teacher', 'student'])
+})
+
+user_update_status_model = auth_ns.model('UserUpdateStatus', {
+    'status': fields.String(required=True, enum=['ativo', 'inativo'])
+})
+
+user_reset_password_model = auth_ns.model('UserResetPassword', {
+    'password': fields.String(required=True, description='Nova senha')
 })
 
 
@@ -43,3 +70,89 @@ class Login(Resource):
 
         else:
             return make_response(jsonify({"message": "Invalid credentials"}), 401)
+
+
+def require_admin(user_id):
+    """Helper para garantir que o usuário é admin"""
+    user = User.find_by_id(user_id)
+    if not user or user.authority != 'admin':
+        return False
+    return True
+
+
+@auth_ns.route('/users')
+class AdminUsers(Resource):
+    """Admin: listar e criar usuários"""
+
+    @token_required
+    def get(self, current_user_id):
+        if not require_admin(current_user_id):
+            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
+        users = User.get_all()
+        return make_response(jsonify({'success': True, 'users': users, 'total': len(users)}), 200)
+
+    @token_required
+    @auth_ns.expect(user_create_model)
+    def post(self, current_user_id):
+        if not require_admin(current_user_id):
+            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
+        data = request.get_json() or {}
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+        authority = data.get('authority', 'student')
+        if not username or not password:
+            return make_response(jsonify({'success': False, 'message': 'username e password são obrigatórios'}), 400)
+        if User.username_exists(username):
+            return make_response(jsonify({'success': False, 'message': 'Username já existe'}), 409)
+        user_id = User.create_user(username, generate_password_hash(password), authority)
+        return make_response(jsonify({'success': True, 'user_id': user_id}), 201)
+
+
+@auth_ns.route('/users/<int:user_id>')
+class AdminUserDetail(Resource):
+    """Admin: atualizar role e status, resetar senha"""
+
+    @token_required
+    @auth_ns.expect(user_update_role_model)
+    def put(self, current_user_id, user_id):
+        if not require_admin(current_user_id):
+            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
+        data = request.get_json() or {}
+        authority = data.get('authority')
+        if authority not in ['admin', 'teacher', 'student']:
+            return make_response(jsonify({'success': False, 'message': 'authority inválida'}), 400)
+        if not User.find_by_id(user_id):
+            return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
+        User.update_authority(user_id, authority)
+        return make_response(jsonify({'success': True, 'message': 'Perfil atualizado'}), 200)
+
+    @token_required
+    @auth_ns.expect(user_update_status_model)
+    def patch(self, current_user_id, user_id):
+        if not require_admin(current_user_id):
+            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
+        data = request.get_json() or {}
+        status = data.get('status')
+        if status not in ['ativo', 'inativo']:
+            return make_response(jsonify({'success': False, 'message': 'status inválido'}), 400)
+        if not User.find_by_id(user_id):
+            return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
+        User.set_status(user_id, status)
+        return make_response(jsonify({'success': True, 'message': 'Status atualizado'}), 200)
+
+
+@auth_ns.route('/users/<int:user_id>/password')
+class AdminUserPassword(Resource):
+    @token_required
+    @auth_ns.expect(user_reset_password_model)
+    def post(self, current_user_id, user_id):
+        if not require_admin(current_user_id):
+            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
+        data = request.get_json() or {}
+        password = data.get('password')
+        if not password:
+            return make_response(jsonify({'success': False, 'message': 'password é obrigatório'}), 400)
+        if not User.find_by_id(user_id):
+            return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
+        User.update_password(user_id, generate_password_hash(password))
+        return make_response(jsonify({'success': True, 'message': 'Senha redefinida'}), 200)

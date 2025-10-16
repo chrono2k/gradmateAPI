@@ -6,6 +6,8 @@ def enable_cors(app: Flask):
         response.headers['Access-Control-Allow-Origin'] = '*'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        # Allow frontend to read filename from download responses
+        response.headers['Access-Control-Expose-Headers'] = 'Content-Disposition'
         return response
 
     @app.before_request
@@ -15,4 +17,5 @@ def enable_cors(app: Flask):
             response.headers['Access-Control-Allow-Origin'] = '*'
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response.headers['Access-Control-Expose-Headers'] = 'Content-Disposition'
             return response

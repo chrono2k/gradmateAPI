@@ -37,6 +37,18 @@ class Teacher:
         """
         return send_sql_command(query, (project_id,))
 
+    @staticmethod
+    def find_all_by_project_and_role(project_id, role):
+        """Busca professores do projeto filtrando por role (advisor/guest)"""
+        query = """
+            SELECT t.id, t.name, t.observation, t.image, t.user_id, t.created_at, t.updated_at, tp.role
+            FROM teachers t
+            INNER JOIN teacher_project tp ON t.id = tp.teacher_id
+            WHERE tp.project_id = %s AND tp.role = %s
+            ORDER BY t.name ASC
+        """
+        return send_sql_command(query, (project_id, role))
+
 
     @staticmethod
     def select_teacher_by_id(teacher_id):
@@ -55,7 +67,9 @@ class Teacher:
             WHERE id = %s
         """
         result = send_sql_command(query, (teacher_id,))
-        return result[0] if result != 0 else None
+        if result in (0, "0"):
+            return None
+        return result[0] if result else None
 
     @staticmethod
     def select_teacher_by_user_id(user_id):
@@ -74,7 +88,9 @@ class Teacher:
             WHERE user_id = %s
         """
         result = send_sql_command(query, (user_id,))
-        return result[0] if result != 0 else None
+        if result in (0, "0"):
+            return None
+        return result[0] if result else None
 
     @staticmethod
     def select_teacher_by_name(name):
@@ -306,7 +322,9 @@ class Teacher:
         """
         query = "SELECT id FROM teachers WHERE id = %s"
         result = send_sql_command(query, (teacher_id,))
-        return result != 0
+        if result in (0, "0"):
+            return False
+        return bool(result)
 
     @staticmethod
     def check_teacher_email_exists(email, teacher_id=None):

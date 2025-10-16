@@ -20,12 +20,13 @@ class User:
 
     @staticmethod
     def find_by_username(username):
-        result = send_sql_command("SELECT * FROM users WHERE username = %s",(username,))[0]
-        print(result)
-        if result != 0:
-            return User(result[0], result[1], result[2],result[3],result[4])
-        else:
+        result = send_sql_command("SELECT * FROM users WHERE username = %s", (username,))
+        if result in (0, "0"):
             return None
+        row = result[0] if result else None
+        if row:
+            return User(row[0], row[1], row[2], row[3], row[4])
+        return None
 
     @staticmethod
     def delete_user(user_id,active):
@@ -33,11 +34,13 @@ class User:
 
     @staticmethod
     def find_by_id(user_id):
-        result = send_sql_command("SELECT * FROM users WHERE id = %s",(user_id,))[0]
-        if result != 0:
-            return User(result[0], result[1], result[2],result[3],result[4])
-        else:
+        result = send_sql_command("SELECT * FROM users WHERE id = %s", (user_id,))
+        if result in (0, "0"):
             return None
+        row = result[0] if result else None
+        if row:
+            return User(row[0], row[1], row[2], row[3], row[4])
+        return None
 
     @staticmethod
     def select_user_by_id(user_id):
@@ -53,11 +56,13 @@ class User:
         query = """
             SELECT * FROM users WHERE id = %s
         """
-        result = send_sql_command(query, (user_id,))[0]
-        if result != 0:
-            return User(result[0], result[1], result[2], result[3], result[4])
-        else:
+        result = send_sql_command(query, (user_id,))
+        if result in (0, "0"):
             return None
+        row = result[0] if result else None
+        if row:
+            return User(row[0], row[1], row[2], row[3], row[4])
+        return None
 
 
 
@@ -75,8 +80,11 @@ class User:
         return result
 
     @staticmethod
-    def create_user(username, password_hash,authority="user"):
-        send_sql_command("INSERT INTO users (username, password_hash,authority) VALUES (%s, %s, %s)", (username, password_hash,authority))
+    def create_user(username, password_hash, authority="user"):
+        return send_sql_command(
+            "INSERT INTO users (username, password_hash, authority) VALUES (%s, %s, %s)",
+            (username, password_hash, authority)
+        )
 
     @staticmethod
     def update_password(id, password_hash):
@@ -85,4 +93,16 @@ class User:
     @staticmethod
     def update_authority(id,authority):
         send_sql_command("UPDATE users set authority =%s where id =%s", (authority,id))
+
+    @staticmethod
+    def username_exists(username):
+        result = send_sql_command("SELECT id FROM users WHERE username = %s", (username,))
+        if result in (0, "0"):
+            return False
+        return bool(result)
+
+    @staticmethod
+    def set_status(id, status):
+        # status must be 'ativo' or 'inativo'
+        send_sql_command("UPDATE users SET status = %s WHERE id = %s", (status, id))
 

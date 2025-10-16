@@ -12,6 +12,9 @@ migrations = [
     "009_create_teacher_project_table",
     "010_create_report_table",
     "011_create_calendar_table",
+    "012_create_project_files_table",
+    "013_alter_teacher_project_add_role",
+    "014_create_defense_minutes_table",
 
 ]
 

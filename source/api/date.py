@@ -107,14 +107,15 @@ class DateStatusList(Resource):
         try:
             data = request.get_json()
 
-            if not data or 'date' not in data or 'status' not in data:
+
+            if not data or 'date' not in data:
                 return make_response(jsonify({
                     'success': False,
-                    'message': 'Data e status são obrigatórios'
+                    'message': 'Data é obrigatório'
                 }), 400)
 
             date_str = data.get('date')
-            status = data.get('status')
+            # status = data.get('status')
 
             if not validate_date_format(date_str):
                 return make_response(jsonify({
