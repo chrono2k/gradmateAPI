@@ -130,10 +130,10 @@ class Student:
             int: ID do aluno inserido ou None em caso de erro
         """
         query = """
-        INSERT INTO users (username, authority, password_hash) 
-        VALUES (%s, %s, %s)
+        INSERT INTO users (username, authority, password_hash, name) 
+        VALUES (%s, %s, %s, %s)
         """
-        user_id = send_sql_command(query, (email, 'student', generate_password_hash("fatec")))
+        user_id = send_sql_command(query, (email, 'student', generate_password_hash("fatec"), name))
         if user_id != 0:
             query = """
                 INSERT INTO students (name, registration, observation, image, user_id) 

@@ -26,13 +26,15 @@ user_out_model = auth_ns.model('User', {
     'id': fields.Integer,
     'username': fields.String,
     'authority': fields.String(enum=['admin', 'teacher', 'student']),
-    'status': fields.String(enum=['ativo', 'inativo'])
+    'status': fields.String(enum=['ativo', 'inativo']),
+    'name': fields.String
 })
 
 user_create_model = auth_ns.model('UserCreate', {
     'username': fields.String(required=True, description='Login do usuário (email)'),
     'password': fields.String(required=True, description='Senha inicial'),
-    'authority': fields.String(required=True, description='Papel do usuário', enum=['admin', 'teacher', 'student'])
+    'authority': fields.String(required=True, description='Papel do usuário', enum=['admin', 'teacher', 'student']),
+    'name': fields.String(required=False, description='Nome completo do usuário')
 })
 
 user_update_role_model = auth_ns.model('UserUpdateRole', {
@@ -100,11 +102,12 @@ class AdminUsers(Resource):
         username = data.get('username', '').strip()
         password = data.get('password', '')
         authority = data.get('authority', 'student')
+        name = data.get('name', '').strip() or None
         if not username or not password:
             return make_response(jsonify({'success': False, 'message': 'username e password são obrigatórios'}), 400)
         if User.username_exists(username):
             return make_response(jsonify({'success': False, 'message': 'Username já existe'}), 409)
-        user_id = User.create_user(username, generate_password_hash(password), authority)
+        user_id = User.create_user(username, generate_password_hash(password), authority, name)
         return make_response(jsonify({'success': True, 'user_id': user_id}), 201)
 
 
@@ -139,6 +142,26 @@ class AdminUserDetail(Resource):
             return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
         User.set_status(user_id, status)
         return make_response(jsonify({'success': True, 'message': 'Status atualizado'}), 200)
+
+
+# Endpoint para pegar informações do usuário logado
+@auth_ns.route('/user')
+class CurrentUser(Resource):
+    @token_required
+    def get(self, current_user_id):
+        user = User.find_by_id(current_user_id)
+        if not user:
+            return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
+        return make_response(jsonify({
+            'success': True,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'authority': user.authority,
+                'status': user.status,
+                'name': user.name
+            }
+        }), 200)
 
 
 @auth_ns.route('/users/<int:user_id>/password')

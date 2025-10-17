@@ -15,6 +15,7 @@ migrations = [
     "012_create_project_files_table",
     "013_alter_teacher_project_add_role",
     "014_create_defense_minutes_table",
+    "015_add_name_to_users",
 
 ]
 

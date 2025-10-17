@@ -1,3 +1,4 @@
+
 from flask import request, jsonify, make_response, send_file
 from flask_restx import Resource, Namespace, fields
 from decorators import token_required
@@ -20,6 +21,7 @@ import os
 import uuid
 from urllib.parse import quote
 import json
+from utils.mysqlUtils import send_sql_command
 
 project_ns = Namespace('project', description='Gerenciamento de projetos TCC')
 
@@ -209,6 +211,12 @@ class ProjectAtas(Resource):
         if not user_can_manage_project(current_user_id, project_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         data = request.get_json() or {}
+        if isinstance(data, str):
+            import json
+            try:
+                data = json.loads(data)
+            except Exception:
+                return make_response(jsonify({'success': False, 'message': 'Payload inválido'}), 400)
         file_id = data.get('file_id')
         student_name = data.get('student_name', '').strip()
         title = data.get('title', '').strip()
@@ -232,16 +240,18 @@ class ProjectAtas(Resource):
         if not user_can_manage_project(current_user_id, project_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         items = DefenseMinutes.list_by_project(project_id)
-        result = [
-            {
-                'id': r[0],
-                'file_id': r[1],
-                'student_name': r[2],
-                'title': r[3],
-                'result': r[4],
-                'created_at': r[7].isoformat() if r[7] else None
-            } for r in items if items and items != "0"
-        ]
+        result = []
+        if items and items not in (0, "0"):
+            result = [
+                {
+                    'id': r[0],
+                    'file_id': r[1],
+                    'student_name': r[2],
+                    'title': r[3],
+                    'result': r[4],
+                    'created_at': r[7].isoformat() if r[7] else None
+                } for r in items
+            ]
         return make_response(jsonify({'success': True, 'items': result, 'total': len(result)}), 200)
 
 @project_ns.route('/<int:project_id>/atas/<int:ata_id>')
@@ -275,18 +285,53 @@ class ProjectList(Resource):
     @project_ns.response(401, 'Não autorizado')
     @project_ns.response(500, 'Erro interno do servidor')
     def get(self, current_user_id):
-        """Lista todos os projetos"""
+        """Lista todos os projetos, filtrando por usuário logado"""
         try:
+            user = User.find_by_id(current_user_id)
             status = request.args.get('status', 'Pré-projeto')
-            projects = Project.select_all_projects(status)
+            projects = []
+            if user:
+                if user.authority == 'student':
+                    # Buscar projetos do aluno
+                    # Precisa buscar todos os projetos em que o aluno está vinculado
+                    query = """
+                        SELECT p.id, p.name, p.description, p.course_id, p.observation, p.status, p.created_at, p.updated_at
+                        FROM projects p
+                        INNER JOIN student_project sp ON sp.project_id = p.id
+                        INNER JOIN students s ON s.id = sp.student_id
+                        WHERE s.user_id = %s
+                        {status_filter}
+                        ORDER BY p.name ASC
+                    """
+                    status_filter = "" if status == 'all' else "AND p.status = '%s'" % status
+                    final_query = query.format(status_filter=status_filter)
+                    result = send_sql_command(final_query, (user.id,))
+                    projects = result if result and result not in (0, "0") else []
+                elif user.authority == 'teacher':
+                    # Buscar projetos do professor
+                    query = """
+                        SELECT p.id, p.name, p.description, p.course_id, p.observation, p.status, p.created_at, p.updated_at
+                        FROM projects p
+                        INNER JOIN teacher_project tp ON tp.project_id = p.id
+                        INNER JOIN teachers t ON t.id = tp.teacher_id
+                        WHERE t.user_id = %s
+                        {status_filter}
+                        ORDER BY p.name ASC
+                    """
+                    status_filter = "" if status == 'all' else "AND p.status = '%s'" % status
+                    final_query = query.format(status_filter=status_filter)
+                    result = send_sql_command(final_query, (user.id,))
+                    projects = result if result and result not in (0, "0") else []
+                else:
+                    # Admin vê todos
+                    result = Project.select_all_projects(status)
+                    projects = result if result and result not in (0, "0") else []
             response = [format_project_response(project) for project in projects]
-
             return make_response(jsonify({
                 'success': True,
                 'projects': response,
                 'total': len(response)
             }), 200)
-
         except Exception as e:
             return make_response(jsonify({
                 'success': False,
@@ -300,7 +345,7 @@ class ProjectList(Resource):
     def post(self, current_user_id):
         """Cria um novo projeto"""
         try:
-            data = json.loads(request.get_json())
+            data = request.get_json()
 
             if not data or 'name' not in data:
                 return make_response(jsonify({
@@ -310,7 +355,8 @@ class ProjectList(Resource):
 
             name = data.get('name', '').strip()
             description = data.get('description', '').strip() or None
-            course_id = data.get('course_id', None)
+            # Aceita tanto course_id quanto courseId
+            course_id = data.get('course_id') or data.get('courseId')
             observation = data.get('observation', '').strip() or None
             status = data.get('status', 'Pré-projeto')
 
@@ -323,6 +369,14 @@ class ProjectList(Resource):
             project_id = Project.insert_project(name, description, course_id, observation, status)
 
             if project_id:
+                # Se for professor, adiciona ele como orientador do projeto
+                user = User.find_by_id(current_user_id)
+                if user and user.authority == 'teacher':
+                    teacher = Teacher.select_teacher_by_user_id(current_user_id)
+                    if teacher and teacher != 0:
+                        teacher_id = teacher[0]
+                        Project.add_teacher_to_project_with_role(project_id, teacher_id, 'advisor')
+                
                 return make_response(jsonify({
                     'success': True,
                     'message': 'Projeto criado com sucesso!',
@@ -384,15 +438,24 @@ class ProjectDetail(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = json.loads(request.get_json())
+            data = request.get_json()
+            if isinstance(data, str):
+                import json
+                try:
+                    data = json.loads(data)
+                except Exception:
+                    return make_response(jsonify({
+                        'success': False,
+                        'message': 'Payload inválido'
+                    }), 400)
             print(data)
             print(data.get('name'))
 
-            name = data.get('name') if 'name' in data else None
-            description = data.get('description') if 'description' in data else None
-            course_id = data.get('course_id') if 'course_id' in data else None
-            observation = data.get('observation') if 'observation' in data else None
-            status = data.get('status') if 'status' in data else None
+            name = data.get('name') if isinstance(data, dict) and 'name' in data else None
+            description = data.get('description') if isinstance(data, dict) and 'description' in data else None
+            course_id = data.get('course_id') if isinstance(data, dict) and 'course_id' in data else None
+            observation = data.get('observation') if isinstance(data, dict) and 'observation' in data else None
+            status = data.get('status') if isinstance(data, dict) and 'status' in data else None
 
             if Project.update_project(project_id, name, description, course_id, observation, status):
                 return make_response(jsonify({
@@ -458,7 +521,7 @@ class ProjectTeachers(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = json.loads(request.get_json())
+            data = request.get_json()
             teacher_ids = data.get('teacher_ids', [])
 
             if not teacher_ids:
@@ -531,7 +594,7 @@ class ProjectGuests(Resource):
             if not Project.check_project_exists(project_id):
                 return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
 
-            data = json.loads(request.get_json())
+            data = request.get_json()
             guest_ids = data.get('guest_ids', [])
 
             if not isinstance(guest_ids, list) or not guest_ids:
@@ -602,7 +665,7 @@ class ProjectStudents(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = json.loads(request.get_json())
+            data = request.get_json()
             student_ids = data.get('student_ids', [])
 
             if not student_ids:
@@ -680,7 +743,7 @@ class ProjectReports(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = json.loads(request.get_json())
+            data = request.get_json()
 
             if not data or 'description' not in data:
                 return make_response(jsonify({
@@ -701,13 +764,9 @@ class ProjectReports(Resource):
                     'message': 'Descrição deve ter no mínimo 3 caracteres'
                 }), 400)
 
+
             teacher = Teacher.select_teacher_by_user_id(current_user_id)
-            if not teacher or teacher == 0:
-                return make_response(jsonify({
-                    'success': False,
-                    'message': 'Usuário não é professor do sistema'
-                }), 403)
-            teacher_id = teacher[0]
+            teacher_id = teacher[0] if teacher and teacher != 0 else None
 
             report_id = Project.insert_report(
                 project_id, description, teacher_id, pendency,
@@ -757,7 +816,7 @@ class ProjectReportDetail(Resource):
                     'message': 'Relatório não encontrado'
                 }), 404)
 
-            data = json.loads(request.get_json())
+            data = request.get_json()
 
             description = data.get('description') if 'description' in data else None
             pendency = data.get('pendency') if 'pendency' in data else None

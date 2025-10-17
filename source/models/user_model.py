@@ -2,30 +2,32 @@ from utils.mysqlUtils import send_sql_command,connect_to_db
 
 
 class User:
-    def __init__(self, id, username, authority, password_hash, status):
+    def __init__(self, id, username, authority, password_hash, status, name=None):
         self.id = id
         self.username = username
         self.authority = authority
         self.password_hash = password_hash
         self.status = status
+        self.name = name
 
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
             'authority': self.authority,
-            'status': self.status
+            'status': self.status,
+            'name': self.name
         }
 
 
     @staticmethod
     def find_by_username(username):
-        result = send_sql_command("SELECT * FROM users WHERE username = %s", (username,))
+        result = send_sql_command("SELECT id, username, authority, password_hash, status, name FROM users WHERE username = %s", (username,))
         if result in (0, "0"):
             return None
         row = result[0] if result else None
         if row:
-            return User(row[0], row[1], row[2], row[3], row[4])
+            return User(row[0], row[1], row[2], row[3], row[4], row[5] if len(row) > 5 else None)
         return None
 
     @staticmethod
@@ -34,12 +36,12 @@ class User:
 
     @staticmethod
     def find_by_id(user_id):
-        result = send_sql_command("SELECT * FROM users WHERE id = %s", (user_id,))
+        result = send_sql_command("SELECT id, username, authority, password_hash, status, name FROM users WHERE id = %s", (user_id,))
         if result in (0, "0"):
             return None
         row = result[0] if result else None
         if row:
-            return User(row[0], row[1], row[2], row[3], row[4])
+            return User(row[0], row[1], row[2], row[3], row[4], row[5] if len(row) > 5 else None)
         return None
 
     @staticmethod
@@ -54,14 +56,14 @@ class User:
             tuple: Dados do professor ou None se não encontrado
         """
         query = """
-            SELECT * FROM users WHERE id = %s
+            SELECT id, username, authority, password_hash, status, name FROM users WHERE id = %s
         """
         result = send_sql_command(query, (user_id,))
         if result in (0, "0"):
             return None
         row = result[0] if result else None
         if row:
-            return User(row[0], row[1], row[2], row[3], row[4])
+            return User(row[0], row[1], row[2], row[3], row[4], row[5] if len(row) > 5 else None)
         return None
 
 
@@ -80,10 +82,10 @@ class User:
         return result
 
     @staticmethod
-    def create_user(username, password_hash, authority="user"):
+    def create_user(username, password_hash, authority="user", name=None):
         return send_sql_command(
-            "INSERT INTO users (username, password_hash, authority) VALUES (%s, %s, %s)",
-            (username, password_hash, authority)
+            "INSERT INTO users (username, password_hash, authority, name) VALUES (%s, %s, %s, %s)",
+            (username, password_hash, authority, name)
         )
 
     @staticmethod

@@ -165,10 +165,10 @@ class Teacher:
             int: ID do professor inserido ou None em caso de erro
         """
         query = """
-        INSERT INTO users (username, authority, password_hash) 
-        VALUES (%s, %s, %s)
+        INSERT INTO users (username, authority, password_hash, name) 
+        VALUES (%s, %s, %s, %s)
         """
-        user_id = send_sql_command(query, (email, 'teacher', generate_password_hash("fatec")))
+        user_id = send_sql_command(query, (email, 'teacher', generate_password_hash("fatec"), name))
         if user_id != 0:
             query = """
                 INSERT INTO teachers (name, observation, image, user_id) 
