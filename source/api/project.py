@@ -21,7 +21,6 @@ import os
 import uuid
 from urllib.parse import quote
 import json
-from utils.mysqlUtils import send_sql_command
 from utils.request_utils import get_json_data
 
 project_ns = Namespace('project', description='Gerenciamento de projetos TCC')
@@ -213,12 +212,12 @@ class ProjectAtas(Resource):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         data = get_json_data()
         file_id = data.get('file_id')
-        student_name = data.get('student_name', '').strip()
+        student_name = data.get('student_name', '').strip() or None
         title = data.get('title', '').strip()
         result = data.get('result', '').strip().lower()
         location = data.get('location')
         started_at = data.get('started_at')
-        if not file_id or not student_name or not title or result not in ['aprovado', 'reprovado', 'pendente']:
+        if not file_id or not title or result not in ['aprovado', 'reprovado', 'pendente']:
             return make_response(jsonify({'success': False, 'message': 'Payload inválido'}), 400)
         # Check project exists
         if not Project.check_project_exists(project_id):
@@ -270,6 +269,36 @@ class ProjectAtaDetail(Resource):
         ok = DefenseMinutes.delete_by_id(ata_id)
         return make_response(jsonify({'success': bool(ok)}), 200)
 
+@project_ns.route('/atas')
+class AllDefenseMinutes(Resource):
+    """Lista todas as atas de defesa"""
+    
+    @token_required
+    def get(self, current_user_id):
+        """Lista todas as atas de defesa do sistema"""
+        try:
+            result = DefenseMinutes.list_all_with_project()
+            items = []
+            if result and result not in (0, "0"):
+                items = [
+                    {
+                        'id': r[0],
+                        'project_id': r[1],
+                        'file_id': r[2],
+                        'student_name': r[3],
+                        'title': r[4],
+                        'result': r[5],
+                        'location': r[6],
+                        'started_at': r[7].isoformat() if r[7] else None,
+                        'created_at': r[8].isoformat() if r[8] else None,
+                        'created_by': r[9],
+                        'project_name': r[10]
+                    } for r in result
+                ]
+            return make_response(jsonify({'success': True, 'items': items, 'total': len(items)}), 200)
+        except Exception as e:
+            return make_response(jsonify({'success': False, 'message': 'Erro ao listar atas', 'error': str(e)}), 500)
+
 @project_ns.route('/')
 class ProjectList(Resource):
     """Endpoints para listar e criar projetos"""
@@ -287,35 +316,10 @@ class ProjectList(Resource):
             projects = []
             if user:
                 if user.authority == 'student':
-                    # Buscar projetos do aluno
-                    # Precisa buscar todos os projetos em que o aluno está vinculado
-                    query = """
-                        SELECT p.id, p.name, p.description, p.course_id, p.observation, p.status, p.created_at, p.updated_at
-                        FROM projects p
-                        INNER JOIN student_project sp ON sp.project_id = p.id
-                        INNER JOIN students s ON s.id = sp.student_id
-                        WHERE s.user_id = %s
-                        {status_filter}
-                        ORDER BY p.name ASC
-                    """
-                    status_filter = "" if status == 'all' else "AND p.status = '%s'" % status
-                    final_query = query.format(status_filter=status_filter)
-                    result = send_sql_command(final_query, (user.id,))
+                    result = Project.select_projects_by_student(user.id, status)
                     projects = result if result and result not in (0, "0") else []
                 elif user.authority == 'teacher':
-                    # Buscar projetos do professor
-                    query = """
-                        SELECT p.id, p.name, p.description, p.course_id, p.observation, p.status, p.created_at, p.updated_at
-                        FROM projects p
-                        INNER JOIN teacher_project tp ON tp.project_id = p.id
-                        INNER JOIN teachers t ON t.id = tp.teacher_id
-                        WHERE t.user_id = %s
-                        {status_filter}
-                        ORDER BY p.name ASC
-                    """
-                    status_filter = "" if status == 'all' else "AND p.status = '%s'" % status
-                    final_query = query.format(status_filter=status_filter)
-                    result = send_sql_command(final_query, (user.id,))
+                    result = Project.select_projects_by_teacher(user.id, status)
                     projects = result if result and result not in (0, "0") else []
                 else:
                     # Admin vê todos

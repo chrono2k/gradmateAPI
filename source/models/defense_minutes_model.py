@@ -39,3 +39,16 @@ class DefenseMinutes:
         query = "SELECT id FROM project_files WHERE id = %s AND project_id = %s"
         result = send_sql_command(query, (file_id, project_id))
         return bool(result and result != "0")
+    
+    @staticmethod
+    def list_all_with_project():
+        """Lista todas as atas com informações do projeto"""
+        query = """
+            SELECT dm.id, dm.project_id, dm.file_id, dm.student_name, dm.title, 
+                   dm.result, dm.location, dm.started_at, dm.created_at, dm.created_by,
+                   p.name as project_name
+            FROM defense_minutes dm
+            INNER JOIN projects p ON p.id = dm.project_id
+            ORDER BY dm.created_at DESC
+        """
+        return send_sql_command(query, ())

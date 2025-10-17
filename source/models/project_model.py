@@ -45,6 +45,60 @@ class Project:
             """
             return send_sql_command(query, (status,))
 
+    @staticmethod
+    def select_projects_by_student(user_id, status='Pré-projeto'):
+        """
+        Busca projetos vinculados a um aluno
+
+        Args:
+            user_id (int): ID do usuário aluno
+            status (str): Status dos projetos
+
+        Returns:
+            list: Lista de tuplas com os dados dos projetos
+        """
+        query = """
+            SELECT p.id, p.name, p.description, p.course_id, p.observation, p.status, p.created_at, p.updated_at
+            FROM projects p
+            INNER JOIN student_project sp ON sp.project_id = p.id
+            INNER JOIN students s ON s.id = sp.student_id
+            WHERE s.user_id = %s
+        """
+        if status != 'all':
+            query += " AND p.status = %s"
+            query += " ORDER BY p.name ASC"
+            return send_sql_command(query, (user_id, status))
+        else:
+            query += " ORDER BY p.name ASC"
+            return send_sql_command(query, (user_id,))
+
+    @staticmethod
+    def select_projects_by_teacher(user_id, status='Pré-projeto'):
+        """
+        Busca projetos vinculados a um professor
+
+        Args:
+            user_id (int): ID do usuário professor
+            status (str): Status dos projetos
+
+        Returns:
+            list: Lista de tuplas com os dados dos projetos
+        """
+        query = """
+            SELECT p.id, p.name, p.description, p.course_id, p.observation, p.status, p.created_at, p.updated_at
+            FROM projects p
+            INNER JOIN teacher_project tp ON tp.project_id = p.id
+            INNER JOIN teachers t ON t.id = tp.teacher_id
+            WHERE t.user_id = %s
+        """
+        if status != 'all':
+            query += " AND p.status = %s"
+            query += " ORDER BY p.name ASC"
+            return send_sql_command(query, (user_id, status))
+        else:
+            query += " ORDER BY p.name ASC"
+            return send_sql_command(query, (user_id,))
+
 
     @staticmethod
     def select_project_by_id(project_id):

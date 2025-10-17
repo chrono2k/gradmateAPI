@@ -3,6 +3,7 @@ from flask_restx import Resource, Namespace, fields
 from decorators import token_required
 from models.course_model import Course
 from datetime import datetime
+from utils.request_utils import get_json_data
 
 course_ns = Namespace('course', description='Gerenciamento de cursos')
 
@@ -115,7 +116,7 @@ class CourseList(Resource):
     def post(self, current_user_id):
         """Cria um novo curso"""
         try:
-            data = request.get_json()
+            data = get_json_data()
             if not data or 'name' not in data:
                 return make_response(jsonify({
                     'success': False,
@@ -165,7 +166,7 @@ class CourseList(Resource):
     def put(self, current_user_id):
         """Atualiza um curso"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'id' not in data:
                 return make_response(jsonify({
@@ -218,7 +219,7 @@ class CourseList(Resource):
     def delete(self, current_user_id):
         """Remove um curso (marca como inativo)"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'id' not in data:
                 return make_response(jsonify({
@@ -263,7 +264,7 @@ class ActiveCourse(Resource):
     def post(self, current_user_id):
         """Ativa um curso (marca como ativo)"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'id' not in data:
                 return make_response(jsonify({
@@ -339,7 +340,7 @@ class CourseSearch(Resource):
     def post(self, current_user_id):
         """Busca cursos com filtros avançados"""
         try:
-            data = request.get_json() or {}
+            data = get_json_data()
 
             name = data.get('name')
             start_date = data.get('start_date')
