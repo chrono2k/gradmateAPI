@@ -952,6 +952,72 @@ class ProjectFiles(Resource):
             return make_response(jsonify({'success': False, 'message': 'Erro no upload', 'error': str(e)}), 500)
 
 
+@project_ns.route('/<int:project_id>/files/bulk-delete')
+class ProjectFilesBulkDelete(Resource):
+    @token_required
+    def post(self, current_user_id, project_id):
+        """Remove múltiplos arquivos do projeto (best-effort)"""
+        try:
+            # AuthZ: apenas admin/teacher
+            user = User.find_by_id(current_user_id)
+            if not user or user.authority not in ('admin', 'teacher'):
+                return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
+
+            # Projeto precisa existir
+            if not Project.check_project_exists(project_id):
+                return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
+
+            data = get_json_data()
+            file_ids = data.get('file_ids') if isinstance(data, dict) else None
+
+            # Validação do payload
+            if not isinstance(file_ids, list) or not file_ids:
+                return make_response(jsonify({'success': False, 'message': 'file_ids deve ser uma lista não vazia'}), 400)
+
+            # Normaliza ids para inteiros válidos
+            try:
+                file_ids = [int(x) for x in file_ids]
+            except Exception:
+                return make_response(jsonify({'success': False, 'message': 'file_ids deve conter apenas números'}), 400)
+
+            deleted = []
+            failed = []
+            upload_dir = get_project_upload_dir(project_id)
+
+            for fid in file_ids:
+                try:
+                    row = ProjectFile.get_by_id(fid)
+                    # ownership: arquivo precisa pertencer ao projeto
+                    if not row or row[1] != project_id:
+                        failed.append(fid)
+                        continue
+
+                    stored_name = row[3]
+                    abs_path = os.path.join(upload_dir, stored_name)
+                    # Apaga do banco primeiro
+                    ok_db = ProjectFile.delete_by_id(fid)
+                    # Tenta apagar o arquivo físico (não falha se já não existir)
+                    try:
+                        if os.path.exists(abs_path):
+                            os.remove(abs_path)
+                    except Exception:
+                        pass
+
+                    if ok_db:
+                        deleted.append(fid)
+                    else:
+                        failed.append(fid)
+                except Exception:
+                    failed.append(fid)
+
+            if not deleted and not failed:
+                return make_response(jsonify({'success': False, 'message': 'Nenhum arquivo processado'}), 400)
+
+            return make_response(jsonify({'success': True, 'deleted': deleted, 'failed': failed}), 200)
+        except Exception as e:
+            return make_response(jsonify({'success': False, 'message': 'Erro ao remover arquivos', 'error': str(e)}), 500)
+
+
 @project_ns.route('/<int:project_id>/files/<int:file_id>/download')
 class ProjectFileDownload(Resource):
     @token_required
