@@ -836,8 +836,12 @@ class ProjectReportDetail(Resource):
             local = data.get('local') if 'local' in data else None
             feedback = data.get('feedback') if 'feedback' in data else None
 
+            # Definir teacher_id apenas se usuário for professor
+            _t = Teacher.select_teacher_by_user_id(current_user_id)
+            teacher_id = _t[0] if _t and _t != 0 else None
+
             if Project.update_report(report_id, description, pendency, status,
-                                     next_steps, local, feedback, Teacher.select_teacher_by_user_id(current_user_id)[0]):
+                                     next_steps, local, feedback, teacher_id):
                 return make_response(jsonify({
                     'success': True,
                     'message': 'Relatório atualizado com sucesso!'
