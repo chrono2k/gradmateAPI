@@ -232,6 +232,20 @@ class Student:
         return True
 
     @staticmethod
+    def set_status_by_project(project_id, status):
+        """Atualiza o status (coluna students.status) de todos os alunos de um projeto"""
+        query = (
+            """
+            UPDATE students s
+            INNER JOIN student_project sp ON sp.student_id = s.id
+            SET s.status = %s
+            WHERE sp.project_id = %s
+            """
+        )
+        send_sql_command(query, (status, project_id))
+        return True
+
+    @staticmethod
     def delete_student(student_id):
         """
         Exclusão lógica - marca o usuario do aluno como inativo

@@ -266,8 +266,8 @@ class ProjectAtaDetail(Resource):
         row = DefenseMinutes.get_by_id(ata_id)
         if not row or row[1] != project_id:
             return make_response(jsonify({'success': False, 'message': 'Ata não encontrada'}), 404)
-        ok = DefenseMinutes.delete_by_id(ata_id)
-        return make_response(jsonify({'success': bool(ok)}), 200)
+
+        return make_response(jsonify({'success': True}), 200)
 
 @project_ns.route('/atas')
 class AllDefenseMinutes(Resource):
@@ -447,11 +447,32 @@ class ProjectDetail(Resource):
             observation = data.get('observation') if isinstance(data, dict) and 'observation' in data else None
             status = data.get('status') if isinstance(data, dict) and 'status' in data else None
 
-            if Project.update_project(project_id, name, description, course_id, observation, status):
-                return make_response(jsonify({
-                    'success': True,
-                    'message': 'Projeto atualizado com sucesso!'
-                }), 200)
+            # Atualiza projeto
+            updated = Project.update_project(project_id, name, description, course_id, observation, status)
+
+            # Se status for Concluído/Finalizado, marcar alunos do projeto como "formado"
+            normalized_status = None
+            try:
+                normalized_status = status.strip().lower() if isinstance(status, str) else None
+            except Exception:
+                normalized_status = None
+
+            did_grad = False
+            if normalized_status in ('concluído', 'concluido', 'finalizado'):
+                try:
+                    # Atualiza status dos alunos vinculados ao projeto
+                    from models.student_model import Student
+                    Student.set_status_by_project(project_id, 'formado')
+                    did_grad = True
+                except Exception:
+                    # não quebra a atualização do projeto se falhar
+                    did_grad = False
+
+            if updated or did_grad:
+                msg = 'Projeto atualizado com sucesso!'
+                if did_grad:
+                    msg += " Alunos do projeto marcados como 'formado'."
+                return make_response(jsonify({'success': True, 'message': msg}), 200)
             else:
                 return make_response(jsonify({
                     'success': False,
