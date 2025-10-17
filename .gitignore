@@ -1,7 +1,44 @@
-.idea
+.idea/
 gradmateAPI.iml
+
+# Python caches
+__pycache__/
 source/__pycache__/
 source/api/__pycache__/
 source/migrations/__pycache__/
 source/models/__pycache__/
 source/utils/__pycache__/
+*.py[cod]
+*.pyo
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+
+# Editors/IDE
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Local data / uploads
+uploads/
+
+# Logs
+*.log
+logs/
+
+# DB dumps
+*.sql
+*.dump
+
+# Coverage / test
+.coverage
+htmlcov/
+pytest-cache/
+
+# Node (if present)
+node_modules/
