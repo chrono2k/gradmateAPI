@@ -8,6 +8,7 @@ from utils.jwt_utils import encode_jwt
 from utils.config import Config
 from time import strftime, localtime
 from decorators import token_required
+from utils.request_utils import get_json_data
 
 auth_ns = Namespace('auth', description='Autenticação de usuário')
 
@@ -56,7 +57,7 @@ class Login(Resource):
     @auth_ns.response(200, 'Login realizado com sucesso', token_model)
     @auth_ns.response(401, 'Credenciais inválidas')
     def post(self):
-        data = request.get_json()
+        data = get_json_data()
         username = data.get('username')
         password = data.get('password')
         user = User.find_by_username(username)
@@ -98,7 +99,7 @@ class AdminUsers(Resource):
     def post(self, current_user_id):
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        data = request.get_json() or {}
+        data = get_json_data()
         username = data.get('username', '').strip()
         password = data.get('password', '')
         authority = data.get('authority', 'student')
@@ -120,7 +121,7 @@ class AdminUserDetail(Resource):
     def put(self, current_user_id, user_id):
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        data = request.get_json() or {}
+        data = get_json_data()
         authority = data.get('authority')
         if authority not in ['admin', 'teacher', 'student']:
             return make_response(jsonify({'success': False, 'message': 'authority inválida'}), 400)
@@ -134,7 +135,7 @@ class AdminUserDetail(Resource):
     def patch(self, current_user_id, user_id):
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        data = request.get_json() or {}
+        data = get_json_data()
         status = data.get('status')
         if status not in ['ativo', 'inativo']:
             return make_response(jsonify({'success': False, 'message': 'status inválido'}), 400)
@@ -171,7 +172,7 @@ class AdminUserPassword(Resource):
     def post(self, current_user_id, user_id):
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        data = request.get_json() or {}
+        data = get_json_data()
         password = data.get('password')
         if not password:
             return make_response(jsonify({'success': False, 'message': 'password é obrigatório'}), 400)

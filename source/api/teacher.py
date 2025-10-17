@@ -1,6 +1,7 @@
 from flask import request, jsonify, make_response
 from flask_restx import Resource, Namespace, fields
 from decorators import token_required
+from utils.request_utils import get_json_data
 from models.teacher_model import Teacher
 from models.user_model import User
 from datetime import datetime
@@ -106,7 +107,7 @@ class TeacherList(Resource):
     def post(self, current_user_id):
         """Cria um novo professor"""
         try:
-            data = request.get_json()
+            data = get_json_data()
             if not data or 'name' not in data:
                 return make_response(jsonify({
                     'success': False,
@@ -168,7 +169,7 @@ class TeacherList(Resource):
     def put(self, current_user_id):
         """Atualiza um professor"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'id' not in data:
                 return make_response(jsonify({
@@ -221,7 +222,7 @@ class TeacherList(Resource):
     def delete(self, current_user_id):
         """Remove um professor (marca como inativo)"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'id' not in data:
                 return make_response(jsonify({
@@ -266,7 +267,7 @@ class ActiveTeacher(Resource):
     def post(self, current_user_id):
         """Ativa um professor (marca como ativo)"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'id' not in data:
                 return make_response(jsonify({
@@ -342,7 +343,7 @@ class TeacherSearch(Resource):
     def post(self, current_user_id):
         """Busca professores com filtros avançados"""
         try:
-            data = request.get_json() or {}
+            data = get_json_data()
 
             name = data.get('name')
             start_date = data.get('start_date')

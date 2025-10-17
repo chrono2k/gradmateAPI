@@ -1,6 +1,7 @@
 from flask import request, jsonify, make_response
 from flask_restx import Resource, Namespace, fields
 from decorators import token_required
+from utils.request_utils import get_json_data
 from models.date_model import DateStatus
 from datetime import datetime
 
@@ -105,7 +106,7 @@ class DateStatusList(Resource):
     def post(self, current_user_id):
         """Cria um novo status de data"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
 
             if not data or 'date' not in data:
@@ -158,7 +159,7 @@ class DateStatusList(Resource):
     def put(self, current_user_id):
         """Atualiza ou cria o status de uma data"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'date' not in data or 'status' not in data:
                 return make_response(jsonify({
@@ -207,7 +208,7 @@ class DateStatusList(Resource):
     def delete(self, current_user_id):
         """Remove o status de uma data"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'date' not in data:
                 return make_response(jsonify({

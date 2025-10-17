@@ -22,6 +22,7 @@ import uuid
 from urllib.parse import quote
 import json
 from utils.mysqlUtils import send_sql_command
+from utils.request_utils import get_json_data
 
 project_ns = Namespace('project', description='Gerenciamento de projetos TCC')
 
@@ -210,13 +211,7 @@ class ProjectAtas(Resource):
         """Cria registro de ata de defesa"""
         if not user_can_manage_project(current_user_id, project_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        data = request.get_json() or {}
-        if isinstance(data, str):
-            import json
-            try:
-                data = json.loads(data)
-            except Exception:
-                return make_response(jsonify({'success': False, 'message': 'Payload inválido'}), 400)
+        data = get_json_data()
         file_id = data.get('file_id')
         student_name = data.get('student_name', '').strip()
         title = data.get('title', '').strip()
@@ -345,7 +340,7 @@ class ProjectList(Resource):
     def post(self, current_user_id):
         """Cria um novo projeto"""
         try:
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'name' not in data:
                 return make_response(jsonify({
@@ -438,16 +433,7 @@ class ProjectDetail(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = request.get_json()
-            if isinstance(data, str):
-                import json
-                try:
-                    data = json.loads(data)
-                except Exception:
-                    return make_response(jsonify({
-                        'success': False,
-                        'message': 'Payload inválido'
-                    }), 400)
+            data = get_json_data()
             print(data)
             print(data.get('name'))
 
@@ -521,7 +507,7 @@ class ProjectTeachers(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = request.get_json()
+            data = get_json_data()
             teacher_ids = data.get('teacher_ids', [])
 
             if not teacher_ids:
@@ -594,7 +580,7 @@ class ProjectGuests(Resource):
             if not Project.check_project_exists(project_id):
                 return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
 
-            data = request.get_json()
+            data = get_json_data()
             guest_ids = data.get('guest_ids', [])
 
             if not isinstance(guest_ids, list) or not guest_ids:
@@ -665,7 +651,7 @@ class ProjectStudents(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = request.get_json()
+            data = get_json_data()
             student_ids = data.get('student_ids', [])
 
             if not student_ids:
@@ -743,7 +729,7 @@ class ProjectReports(Resource):
                     'message': 'Projeto não encontrado'
                 }), 404)
 
-            data = request.get_json()
+            data = get_json_data()
 
             if not data or 'description' not in data:
                 return make_response(jsonify({
@@ -816,7 +802,7 @@ class ProjectReportDetail(Resource):
                     'message': 'Relatório não encontrado'
                 }), 404)
 
-            data = request.get_json()
+            data = get_json_data()
 
             description = data.get('description') if 'description' in data else None
             pendency = data.get('pendency') if 'pendency' in data else None
