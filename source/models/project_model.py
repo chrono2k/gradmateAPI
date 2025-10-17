@@ -349,7 +349,11 @@ class Project:
             WHERE project_id = %s AND student_id = %s
         """
         result = send_sql_command(query, (project_id, student_id))
-        return len(result) > 0
+        # Alguns caminhos do send_sql_command retornam 0/"0" quando não há linhas,
+        # então precisamos normalizar antes de usar len().
+        if result in (0, "0"):
+            return False
+        return isinstance(result, (list, tuple)) and len(result) > 0
 
     # ===== REPORTS =====
 
