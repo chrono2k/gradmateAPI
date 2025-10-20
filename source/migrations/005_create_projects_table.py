@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT NULL,
     course_id INT,
     observation TEXT NULL,
-    status ENUM('Pré-projeto', 'Qualificação','Defesa','Finalizado','Trancado') DEFAULT 'Pré-projeto',
+    status ENUM('Pré-projeto', 'Qualificação','Defesa','Concluído','Trancado') DEFAULT 'Pré-projeto',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_nome (name),

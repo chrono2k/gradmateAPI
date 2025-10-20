@@ -116,7 +116,7 @@ class DateStatusList(Resource):
                 }), 400)
 
             date_str = data.get('date')
-            # status = data.get('status')
+            status = data.get('status')
 
             if not validate_date_format(date_str):
                 return make_response(jsonify({
