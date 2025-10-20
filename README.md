@@ -62,193 +62,93 @@ pip install flask flask-restx mysqlclient werkzeug
 
 ### Configuração
 
-1. Clone o repositório:
-```bash
-git clone https://github.com/chrono2k/gradmateAPI.git
+# GradMate API
+
+Este projeto é a API REST que usamos para gerenciar projetos de TCC (Trabalho de Conclusão de Curso) — coisas como projetos, alunos, orientadores, relatórios, arquivos e atas de defesa. Escrevi este README de forma direta, sem frescura, pra você entender rápido como rodar, desenvolver e onde olhar quando algo estranha acontecer.
+
+---
+
+Sumário rápido
+- O backend é em Python (Flask + Flask-RESTX)
+- Banco: MySQL
+- Autenticação por JWT
+- Uploads salvos em `uploads/projects/{project_id}/`
+
+Pré-requisitos
+- Python 3.7+ instalado
+- MySQL rodando (pode usar XAMPP)
+
+Instalação e execução (modo rápido)
+1) Clone o repositório e entre na pasta:
+
+```powershell
+git clone <repo-url>
 cd gradmateAPI
 ```
 
-2. Configure o banco de dados em `source/utils/config.py`:
-```python
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = ''
-MYSQL_PORT = 3306
-MYSQL_DB = 'gradmate'
+2) Crie um ambiente virtual e instale dependências (exemplo com venv):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-3. Configure as chaves secretas (importante para produção):
-```python
-SECRET_KEY = 'sua_chave_secreta'
-JWT_SECRET_KEY = 'sua_chave_jwt'
+Se não tiver `requirements.txt`, instale o mínimo:
+
+```powershell
+pip install flask flask-restx mysqlclient werkzeug
 ```
 
-4. Execute a aplicação:
-```bash
-cd source
-python apiRest.py
+3) Ajuste as configurações em `source/utils/config.py` (user, senha, nome do DB, etc.)
+
+4) Rode as migrações e inicie a API:
+
+```powershell
+python source/run_migrations.py
+python source/apiRest.py
 ```
 
-A API estará disponível em `http://localhost:5000`
+A aplicação vai abrir em `http://localhost:5000`.
 
-## Documentação
-
-A documentação interativa Swagger está disponível em:
-```
-http://localhost:5000/api/docs
-```
-
-## Endpoints Principais
-
-### Autenticação
-- `POST /auth/login` - Login de usuário
-- `POST /auth/register` - Registro de novo usuário
-- `GET /auth/user` - Dados do usuário autenticado
-
-### Gestão de Usuários (Admin)
-- `GET /auth/users` - Listar todos os usuários
-- `GET /auth/users/{id}` - Buscar usuário por ID
-- `POST /auth/users` - Criar novo usuário
-- `PUT /auth/users/{id}` - Atualizar usuário
-- `DELETE /auth/users/{id}` - Deletar usuário
-- `PATCH /auth/users/{id}/status` - Ativar/desativar usuário
-- `PATCH /auth/users/{id}/role` - Alterar papel do usuário
-- `POST /auth/users/{id}/reset-password` - Resetar senha
-
-### Projetos
-- `GET /project/` - Listar projetos
-- `POST /project/` - Criar projeto
-- `GET /project/{id}` - Buscar projeto específico
-- `PUT /project/{id}` - Atualizar projeto
-- `DELETE /project/{id}` - Deletar projeto
-- `GET /project/statistics` - Estatísticas dos projetos
-
-### Orientadores/Banca
-- `POST /project/{id}/teachers` - Adicionar orientadores
-- `DELETE /project/{id}/teachers/{teacher_id}` - Remover orientador
-- `PUT /project/{id}/guests` - Adicionar membros da banca
-- `DELETE /project/{id}/guests/{guest_id}` - Remover membro da banca
-
-### Alunos
-- `POST /project/{id}/students` - Adicionar alunos ao projeto
-- `DELETE /project/{id}/students/{student_id}` - Remover aluno
-
-### Relatórios
-- `POST /project/{id}/reports` - Criar relatório
-- `PUT /project/{id}/reports/{report_id}` - Atualizar relatório
-- `DELETE /project/{id}/reports/{report_id}` - Deletar relatório
-
-### Arquivos
-- `GET /project/{id}/files` - Listar arquivos do projeto
-- `POST /project/{id}/files` - Upload de arquivos
-- `GET /project/{id}/files/{file_id}/download` - Download de arquivo
-- `DELETE /project/{id}/files/{file_id}` - Deletar arquivo
-
-### Atas de Defesa
-- `POST /project/{id}/atas` - Registrar ata de defesa
-- `GET /project/{id}/atas` - Listar atas do projeto
-- `GET /project/{id}/atas/{ata_id}` - Buscar ata específica
-- `DELETE /project/{id}/atas/{ata_id}` - Deletar ata
-
-### Calendário
-- `GET /date/` - Listar status de datas
-- `POST /date/` - Criar status de data
-- `PUT /date/` - Atualizar status de data
-- `DELETE /date/` - Deletar status de data
-- `GET /date/year/{year}` - Status de um ano específico
-- `GET /date/statistics` - Estatísticas do calendário
-
-### Professores
-- `GET /teacher/` - Listar professores
-- `POST /teacher/` - Criar professor
-- `GET /teacher/{id}` - Buscar professor
-- `PUT /teacher/{id}` - Atualizar professor
-- `DELETE /teacher/{id}` - Deletar professor
-
-### Alunos
-- `GET /student/` - Listar alunos
-- `POST /student/` - Criar aluno
-- `GET /student/{id}` - Buscar aluno
-- `PUT /student/{id}` - Atualizar aluno
-- `DELETE /student/{id}` - Deletar aluno
-
-### Cursos
-- `GET /course/` - Listar cursos
-- `POST /course/` - Criar curso
-- `GET /course/{id}` - Buscar curso
-- `PUT /course/{id}` - Atualizar curso
-- `DELETE /course/{id}` - Deletar curso
-
-## Autenticação
-
-A API utiliza JWT (JSON Web Token) para autenticação. Após o login, inclua o token no header das requisições:
+Endpoints e uso básico
+- A API usa JWT. Faça login em `/auth/login` e passe o token nas requisições:
 
 ```
-Authorization: Bearer seu_token_aqui
+Authorization: Bearer <seu-token>
 ```
 
-## Níveis de Acesso
+Principais rotas (resumo):
+- Auth: `/auth/*` (login, register, current user, gestão de usuários)
+- Projetos: `/project/*` (listar, criar, atualizar, deletar, estatísticas)
+- Arquivos: `/project/{id}/files` (upload, lista, download, delete, bulk-delete)
+- Relatórios: `/project/{id}/reports` (CRUD)
+- Atas: `/project/{id}/atas` (CRUD de atas de defesa)
+- Professores / Alunos / Cursos / Calendário: endpoints óbvios dentro de `source/api/`
 
-- **admin**: Acesso total ao sistema, incluindo gestão de usuários
-- **teacher**: Gestão de projetos, relatórios e arquivos
-- **student**: Visualização e interação limitada
+Extras e comportamentos importantes
+- Quando você marcar um projeto como `Concluído` (ou `Finalizado`), o sistema marca automaticamente os alunos vinculados como `formado`.
+- Existe um endpoint de bulk-delete de arquivos: `POST /project/{id}/files/bulk-delete` que tenta deletar cada arquivo e retorna arrays `deleted` e `failed`.
+- Uploads são armazenados em disco com nomes únicos; o banco mantém o original.
 
-## Migrações
+Migrações
+- As migrações estão em `source/migrations/`. O `run_migrations.py` tenta executar todas — se já existirem tabelas/colunas, o script imprime a mensagem e segue.
 
-O sistema executa automaticamente todas as migrações ao iniciar. As migrações criam as seguintes tabelas:
+Desenvolvimento rápido
+- Para adicionar endpoint: crie/edite um arquivo em `source/api/` e registre o namespace em `apiRest.py`.
+- Para alterar modelo/migrations: crie um arquivo em `source/migrations/NNN_descricao.py` com `run_migration()` e adicione o nome no `run_migrations.py`.
 
-1. `user` - Usuários do sistema
-2. `course` - Cursos
-3. `student` - Alunos
-4. `teacher` - Professores
-5. `project` - Projetos TCC
-6. `student_course` - Relação aluno-curso
-7. `student_project` - Relação aluno-projeto
-8. `teacher_course` - Relação professor-curso
-9. `teacher_project` - Relação professor-projeto (com role: advisor/guest)
-10. `report` - Relatórios de acompanhamento
-11. `calendar` - Status de datas
-12. `project_files` - Arquivos dos projetos
-13. `defense_minutes` - Atas de defesa
+Notas de manutenção e debugging
+- Use `print()` nos endpoints para depurar rapidamente durante desenvolvimento (já tem alguns prints úteis no código).
+- Muitos erros comuns vinham de payload JSON vindo como string — por isso existe um helper `source/utils/request_utils.py` que normaliza `request.get_json()`.
+- O helper do banco `send_sql_command` retorna `0` quando não há resultado — cuidado ao usar `len()` direto no retorno.
 
-## Status de Projeto
+Contribuições
+- Se for rodar em produção, configure corretamente as chaves (`SECRET_KEY`, `JWT_SECRET_KEY`) e não deixe credenciais no código.
+- Prefira criar pequenas migrações e testá-las localmente antes de commitar.
 
-- Pré-projeto
-- Qualificação
-- Defesa
-- Finalizado
-- Trancado
+Contato / Autor
+- Projeto mantido por: chrono2k
 
-## Uploads
-
-Os arquivos são armazenados em `uploads/projects/{project_id}/` com nomes únicos gerados automaticamente. O sistema suporta arquivos de até 64MB por requisição.
-
-## Desenvolvimento
-
-### Adicionar Nova Migração
-
-1. Crie um arquivo em `source/migrations/` seguindo o padrão `NNN_descricao.py`
-2. Implemente a função `run_migration()`
-3. Adicione o nome do arquivo (sem extensão) na lista em `run_migrations.py`
-
-### Adicionar Novo Endpoint
-
-1. Crie ou edite um arquivo em `source/api/`
-2. Defina o namespace com `Namespace()`
-3. Crie as classes Resource com os métodos HTTP
-4. Registre o namespace em `apiRest.py`
-
-## Segurança
-
-- Senhas são hasheadas com Werkzeug Security
-- JWT para autenticação stateless
-- Validação de permissões em endpoints sensíveis
-- CORS configurado para aceitar origens específicas
-
-## Licença
-
-Este projeto é de uso acadêmico.
-
-## Autor
-
-chrono2k
+Licença
+- Uso acadêmico / interno
