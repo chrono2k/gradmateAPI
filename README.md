@@ -2,6 +2,8 @@
 
 API REST para gerenciamento de projetos de TCC (Trabalho de Conclusão de Curso), desenvolvida com Flask e MySQL.
 
+Documentação detalhada dos endpoints está em docs/DOCUMENTATION_API.md.
+
 ## Funcionalidades
 
 - **Autenticação**: Sistema de login com JWT
@@ -138,14 +140,6 @@ Desenvolvimento rápido
 - Para adicionar endpoint: crie/edite um arquivo em `source/api/` e registre o namespace em `apiRest.py`.
 - Para alterar modelo/migrations: crie um arquivo em `source/migrations/NNN_descricao.py` com `run_migration()` e adicione o nome no `run_migrations.py`.
 
-Notas de manutenção e debugging
-- Use `print()` nos endpoints para depurar rapidamente durante desenvolvimento (já tem alguns prints úteis no código).
-- Muitos erros comuns vinham de payload JSON vindo como string — por isso existe um helper `source/utils/request_utils.py` que normaliza `request.get_json()`.
-- O helper do banco `send_sql_command` retorna `0` quando não há resultado — cuidado ao usar `len()` direto no retorno.
-
-Contribuições
-- Se for rodar em produção, configure corretamente as chaves (`SECRET_KEY`, `JWT_SECRET_KEY`) e não deixe credenciais no código.
-- Prefira criar pequenas migrações e testá-las localmente antes de commitar.
 
 Contato / Autor
 - Projeto mantido por: chrono2k
