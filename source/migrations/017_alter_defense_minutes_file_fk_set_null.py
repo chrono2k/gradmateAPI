@@ -5,7 +5,6 @@ def run_migration():
     """Altera FK defense_minutes.file_id para ON DELETE SET NULL e permite NULL na coluna"""
     print("Ajustando FK defense_minutes_ibfk_2 para ON DELETE SET NULL...")
 
-    # 1) Remover a FK atual (pode falhar se já não existir)
     execute_migration(
         """
         ALTER TABLE defense_minutes
@@ -13,7 +12,6 @@ def run_migration():
         """
     )
 
-    # 2) Tornar a coluna file_id anulável
     execute_migration(
         """
         ALTER TABLE defense_minutes
@@ -21,7 +19,6 @@ def run_migration():
         """
     )
 
-    # 3) Recriar a FK com ON DELETE SET NULL
     execute_migration(
         """
         ALTER TABLE defense_minutes

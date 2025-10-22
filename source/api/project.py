@@ -1,4 +1,3 @@
-
 from flask import request, jsonify, make_response, send_file
 from flask_restx import Resource, Namespace, fields
 from decorators import token_required
@@ -25,6 +24,7 @@ from utils.request_utils import get_json_data
 
 project_ns = Namespace('project', description='Gerenciamento de projetos TCC')
 
+
 def user_can_manage_project(user_id, project_id):
     # Only admin or advisor in project
     from models.user_model import User
@@ -41,6 +41,7 @@ def user_can_manage_project(user_id, project_id):
         return False
     return Project.check_teacher_in_project_with_role(project_id, teacher[0], 'advisor')
 
+
 ata_model = project_ns.model('DefenseMinutes', {
     'id': fields.Integer,
     'project_id': fields.Integer,
@@ -53,6 +54,7 @@ ata_model = project_ns.model('DefenseMinutes', {
     'created_at': fields.DateTime,
     'created_by': fields.Integer
 })
+
 
 def format_ata_response(row):
     if not row:
@@ -69,7 +71,6 @@ def format_ata_response(row):
         'created_at': row[8].isoformat() if row[8] else None,
         'created_by': row[9]
     }
-
 
 
 project_model = project_ns.model('Project', {
@@ -130,7 +131,6 @@ project_search_model = project_ns.model('ProjectSearch', {
     'start_date': fields.String(description='Data inicial (YYYY-MM-DD)'),
     'end_date': fields.String(description='Data final (YYYY-MM-DD)'),
 })
-
 
 # ===== Files models/helpers =====
 file_model = project_ns.model('ProjectFile', {
@@ -203,6 +203,7 @@ def format_project_response(project_data):
         print(f"Erro ao formatar projeto: {e}")
     return {}
 
+
 @project_ns.route('/<int:project_id>/atas')
 class ProjectAtas(Resource):
     @token_required
@@ -225,54 +226,16 @@ class ProjectAtas(Resource):
         # Check file ownership
         if not DefenseMinutes.validate_file_ownership(project_id, file_id):
             return make_response(jsonify({'success': False, 'message': 'Arquivo não pertence ao projeto'}), 404)
-        ata_id = DefenseMinutes.insert(project_id, file_id, student_name, title, result, location, started_at, current_user_id)
+        ata_id = DefenseMinutes.insert(project_id, file_id, student_name, title, result, location, started_at,
+                                       current_user_id)
         row = DefenseMinutes.get_by_id(ata_id)
         return make_response(jsonify({'success': True, 'ata': format_ata_response(row)}), 201)
 
-    @token_required
-    def get(self, current_user_id, project_id):
-        if not user_can_manage_project(current_user_id, project_id):
-            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        items = DefenseMinutes.list_by_project(project_id)
-        result = []
-        if items and items not in (0, "0"):
-            result = [
-                {
-                    'id': r[0],
-                    'file_id': r[1],
-                    'student_name': r[2],
-                    'title': r[3],
-                    'result': r[4],
-                    'created_at': r[7].isoformat() if r[7] else None
-                } for r in items
-            ]
-        return make_response(jsonify({'success': True, 'items': result, 'total': len(result)}), 200)
-
-@project_ns.route('/<int:project_id>/atas/<int:ata_id>')
-class ProjectAtaDetail(Resource):
-    @token_required
-    def get(self, current_user_id, project_id, ata_id):
-        if not user_can_manage_project(current_user_id, project_id):
-            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        row = DefenseMinutes.get_by_id(ata_id)
-        if not row or row[1] != project_id:
-            return make_response(jsonify({'success': False, 'message': 'Ata não encontrada'}), 404)
-        return make_response(jsonify({'success': True, 'ata': format_ata_response(row)}), 200)
-
-    @token_required
-    def delete(self, current_user_id, project_id, ata_id):
-        if not user_can_manage_project(current_user_id, project_id):
-            return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
-        row = DefenseMinutes.get_by_id(ata_id)
-        if not row or row[1] != project_id:
-            return make_response(jsonify({'success': False, 'message': 'Ata não encontrada'}), 404)
-
-        return make_response(jsonify({'success': True}), 200)
 
 @project_ns.route('/atas')
 class AllDefenseMinutes(Resource):
     """Lista todas as atas de defesa"""
-    
+
     @token_required
     def get(self, current_user_id):
         """Lista todas as atas de defesa do sistema"""
@@ -298,6 +261,7 @@ class AllDefenseMinutes(Resource):
             return make_response(jsonify({'success': True, 'items': items, 'total': len(items)}), 200)
         except Exception as e:
             return make_response(jsonify({'success': False, 'message': 'Erro ao listar atas', 'error': str(e)}), 500)
+
 
 @project_ns.route('/')
 class ProjectList(Resource):
@@ -375,7 +339,7 @@ class ProjectList(Resource):
                     if teacher and teacher != 0:
                         teacher_id = teacher[0]
                         Project.add_teacher_to_project_with_role(project_id, teacher_id, 'advisor')
-                
+
                 return make_response(jsonify({
                     'success': True,
                     'message': 'Projeto criado com sucesso!',
@@ -492,6 +456,12 @@ class ProjectDetail(Resource):
     def delete(self, current_user_id, project_id):
         """Remove um projeto"""
         try:
+            # Apenas admin ou orientador do projeto podem remover
+            if not user_can_manage_project(current_user_id, project_id):
+                return make_response(jsonify({
+                    'success': False,
+                    'message': 'Não autorizado'
+                }), 403)
             if not Project.check_project_exists(project_id):
                 return make_response(jsonify({
                     'success': False,
@@ -515,6 +485,7 @@ class ProjectDetail(Resource):
                 'message': 'Erro ao remover projeto',
                 'error': str(e)
             }), 500)
+
 
 @project_ns.route('/<int:project_id>/teachers')
 class ProjectTeachers(Resource):
@@ -558,6 +529,7 @@ class ProjectTeachers(Resource):
                 'message': 'Erro ao adicionar professores',
                 'error': str(e)
             }), 500)
+
 
 @project_ns.route('/<int:project_id>/teachers/<int:teacher_id>')
 class ProjectTeacherDetail(Resource):
@@ -609,7 +581,8 @@ class ProjectGuests(Resource):
             guest_ids = data.get('guest_ids', [])
 
             if not isinstance(guest_ids, list) or not guest_ids:
-                return make_response(jsonify({'success': False, 'message': 'guest_ids deve ser uma lista não vazia'}), 422)
+                return make_response(jsonify({'success': False, 'message': 'guest_ids deve ser uma lista não vazia'}),
+                                     422)
 
             added = []
             warnings = []
@@ -620,7 +593,8 @@ class ProjectGuests(Resource):
                     continue
                 # não pode ser orientador
                 if Project.check_teacher_in_project_with_role(project_id, guest_id, 'advisor'):
-                    return make_response(jsonify({'success': False, 'message': 'Professor já é orientador do projeto'}), 400)
+                    return make_response(jsonify({'success': False, 'message': 'Professor já é orientador do projeto'}),
+                                         400)
                 # idempotente: pular se já é guest
                 if Project.check_teacher_in_project_with_role(project_id, guest_id, 'guest'):
                     continue
@@ -636,7 +610,8 @@ class ProjectGuests(Resource):
                 'warnings': warnings
             }), 200)
         except Exception as e:
-            return make_response(jsonify({'success': False, 'message': 'Erro ao adicionar convidados', 'error': str(e)}), 500)
+            return make_response(
+                jsonify({'success': False, 'message': 'Erro ao adicionar convidados', 'error': str(e)}), 500)
 
 
 @project_ns.route('/<int:project_id>/guests/<int:guest_id>')
@@ -658,7 +633,9 @@ class ProjectGuestDetail(Resource):
             else:
                 return make_response(jsonify({'success': False, 'message': 'Erro ao remover convidado'}), 500)
         except Exception as e:
-            return make_response(jsonify({'success': False, 'message': 'Erro ao remover convidado', 'error': str(e)}), 500)
+            return make_response(jsonify({'success': False, 'message': 'Erro ao remover convidado', 'error': str(e)}),
+                                 500)
+
 
 @project_ns.route('/<int:project_id>/students')
 class ProjectStudents(Resource):
@@ -702,6 +679,7 @@ class ProjectStudents(Resource):
                 'message': 'Erro ao adicionar alunos',
                 'error': str(e)
             }), 500)
+
 
 @project_ns.route('/<int:project_id>/students/<int:student_id>')
 class ProjectStudentDetail(Resource):
@@ -774,7 +752,6 @@ class ProjectReports(Resource):
                     'success': False,
                     'message': 'Descrição deve ter no mínimo 3 caracteres'
                 }), 400)
-
 
             teacher = Teacher.select_teacher_by_user_id(current_user_id)
             teacher_id = teacher[0] if teacher and teacher != 0 else None
@@ -865,6 +842,9 @@ class ProjectReportDetail(Resource):
     def delete(self, current_user_id, project_id, report_id):
         """Remove um relatório do projeto"""
         try:
+            # Apenas admin ou orientador do projeto podem remover relatório
+            if not user_can_manage_project(current_user_id, project_id):
+                return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
             if not Project.check_project_exists(project_id):
                 return make_response(jsonify({
                     'success': False,
@@ -938,7 +918,8 @@ class ProjectFiles(Resource):
             files = [format_file_response(r) for r in rows] if rows and rows != "0" else []
             return make_response(jsonify({'success': True, 'files': files, 'total': len(files)}), 200)
         except Exception as e:
-            return make_response(jsonify({'success': False, 'message': 'Erro ao listar arquivos', 'error': str(e)}), 500)
+            return make_response(jsonify({'success': False, 'message': 'Erro ao listar arquivos', 'error': str(e)}),
+                                 500)
 
     @token_required
     def post(self, current_user_id, project_id):
@@ -997,7 +978,8 @@ class ProjectFilesBulkDelete(Resource):
 
             # Validação do payload
             if not isinstance(file_ids, list) or not file_ids:
-                return make_response(jsonify({'success': False, 'message': 'file_ids deve ser uma lista não vazia'}), 400)
+                return make_response(jsonify({'success': False, 'message': 'file_ids deve ser uma lista não vazia'}),
+                                     400)
 
             # Normaliza ids para inteiros válidos
             try:
@@ -1040,7 +1022,8 @@ class ProjectFilesBulkDelete(Resource):
 
             return make_response(jsonify({'success': True, 'deleted': deleted, 'failed': failed}), 200)
         except Exception as e:
-            return make_response(jsonify({'success': False, 'message': 'Erro ao remover arquivos', 'error': str(e)}), 500)
+            return make_response(jsonify({'success': False, 'message': 'Erro ao remover arquivos', 'error': str(e)}),
+                                 500)
 
 
 @project_ns.route('/<int:project_id>/files/<int:file_id>/download')
@@ -1093,4 +1076,5 @@ class ProjectFileDelete(Resource):
             else:
                 return make_response(jsonify({'success': False, 'message': 'Erro ao remover arquivo'}), 500)
         except Exception as e:
-            return make_response(jsonify({'success': False, 'message': 'Erro ao remover arquivo', 'error': str(e)}), 500)
+            return make_response(jsonify({'success': False, 'message': 'Erro ao remover arquivo', 'error': str(e)}),
+                                 500)

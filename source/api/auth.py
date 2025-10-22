@@ -15,14 +15,12 @@ auth_ns = Namespace('auth', description='Autenticação de usuário')
 login_model = auth_ns.model('LoginInput', {
     'username': fields.String(required=True, description='Nome de usuário'),
     'password': fields.String(required=True, description='Senha'),
-    'epoch': fields.Integer(required=True, description='Timestamp para sincronizar o relógio interno')
 })
 
 token_model = auth_ns.model('LoginOutput', {
     'token': fields.String(description='JWT gerado após login bem-sucedido')
 })
 
-# ===== Admin models =====
 user_out_model = auth_ns.model('User', {
     'id': fields.Integer,
     'username': fields.String,
@@ -50,6 +48,11 @@ user_reset_password_model = auth_ns.model('UserResetPassword', {
     'password': fields.String(required=True, description='Nova senha')
 })
 
+user_change_password_model = auth_ns.model('UserChangePassword', {
+    'currentPassword': fields.String(required=True, description='Senha atual'),
+    'newPassword': fields.String(required=True, description='Nova senha')
+})
+
 
 @auth_ns.route('/login/')
 class Login(Resource):
@@ -57,6 +60,7 @@ class Login(Resource):
     @auth_ns.response(200, 'Login realizado com sucesso', token_model)
     @auth_ns.response(401, 'Credenciais inválidas')
     def post(self):
+        """Autentica usuário e retorna JWT"""
         data = get_json_data()
         username = data.get('username')
         password = data.get('password')
@@ -89,6 +93,7 @@ class AdminUsers(Resource):
 
     @token_required
     def get(self, current_user_id):
+        """Lista todos os usuários"""
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         users = User.get_all()
@@ -97,6 +102,7 @@ class AdminUsers(Resource):
     @token_required
     @auth_ns.expect(user_create_model)
     def post(self, current_user_id):
+        """Cria novo usuário"""
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         data = get_json_data()
@@ -119,6 +125,7 @@ class AdminUserDetail(Resource):
     @token_required
     @auth_ns.expect(user_update_role_model)
     def put(self, current_user_id, user_id):
+        """Atualiza usuário"""
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         data = get_json_data()
@@ -133,6 +140,7 @@ class AdminUserDetail(Resource):
     @token_required
     @auth_ns.expect(user_update_status_model)
     def patch(self, current_user_id, user_id):
+        """Altera status (ativo/inativo)"""
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         data = get_json_data()
@@ -145,11 +153,11 @@ class AdminUserDetail(Resource):
         return make_response(jsonify({'success': True, 'message': 'Status atualizado'}), 200)
 
 
-# Endpoint para pegar informações do usuário logado
 @auth_ns.route('/user')
 class CurrentUser(Resource):
     @token_required
     def get(self, current_user_id):
+        """Dados do usuário autenticado"""
         user = User.find_by_id(current_user_id)
         if not user:
             return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
@@ -170,6 +178,7 @@ class AdminUserPassword(Resource):
     @token_required
     @auth_ns.expect(user_reset_password_model)
     def post(self, current_user_id, user_id):
+        """Reset de senha"""
         if not require_admin(current_user_id):
             return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
         data = get_json_data()
@@ -180,3 +189,33 @@ class AdminUserPassword(Resource):
             return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
         User.update_password(user_id, generate_password_hash(password))
         return make_response(jsonify({'success': True, 'message': 'Senha redefinida'}), 200)
+
+
+@auth_ns.route('/user/password')
+class CurrentUserPassword(Resource):
+    @token_required
+    @auth_ns.expect(user_change_password_model)
+    def post(self, current_user_id):
+        """Altera a senha do usuário autenticado"""
+        data = get_json_data()
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+
+        if not current_password or not new_password:
+            return make_response(jsonify({'success': False, 'message': 'currentPassword e newPassword são obrigatórios'}), 400)
+
+        user = User.find_by_id(current_user_id)
+        if not user:
+            return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
+
+        if user.status != 'ativo':
+            return make_response(jsonify({'success': False, 'message': 'Usuário inativo'}), 403)
+
+        if not check_password_hash(user.password_hash, current_password):
+            return make_response(jsonify({'success': False, 'message': 'Senha atual inválida'}), 400)
+
+        if current_password == new_password:
+            return make_response(jsonify({'success': False, 'message': 'A nova senha deve ser diferente da atual'}), 400)
+
+        User.update_password(user.id, generate_password_hash(new_password))
+        return make_response(jsonify({'success': True, 'message': 'Senha atualizada com sucesso'}), 200)

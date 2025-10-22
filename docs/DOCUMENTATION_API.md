@@ -64,6 +64,13 @@ Observação: nomes podem variar conforme evolução. Quando em dúvida, consult
 - GET `/auth/user`
   - Header: `Authorization`
   - 200 → `{ id, name, role, ... }`
+- POST `/auth/user/password`
+  - Header: `Authorization`
+  - Body: `{ currentPassword: string, newPassword: string }`
+  - 200 → `{ success: true, message: "Senha atualizada com sucesso" }`
+  - 400 → `{ success: false, message: "Senha atual inválida" | "A nova senha deve ser diferente da atual" | "currentPassword e newPassword são obrigatórios" }`
+  - 403 → `{ success: false, message: "Usuário inativo" }`
+  - 404 → `{ success: false, message: "Usuário não encontrado" }`
 
 ### 6.2 Courses
 
