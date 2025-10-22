@@ -25,22 +25,6 @@ from utils.request_utils import get_json_data
 project_ns = Namespace('project', description='Gerenciamento de projetos TCC')
 
 
-def user_can_manage_project(user_id, project_id):
-    # Only admin or advisor in project
-    from models.user_model import User
-    from models.project_model import Project
-    user = User.find_by_id(user_id)
-    if not user:
-        return False
-    if user.authority == 'admin':
-        return True
-    # Check if user is advisor in project
-    from models.teacher_model import Teacher
-    teacher = Teacher.select_teacher_by_user_id(user_id)
-    if not teacher:
-        return False
-    return Project.check_teacher_in_project_with_role(project_id, teacher[0], 'advisor')
-
 
 ata_model = project_ns.model('DefenseMinutes', {
     'id': fields.Integer,
@@ -54,24 +38,6 @@ ata_model = project_ns.model('DefenseMinutes', {
     'created_at': fields.DateTime,
     'created_by': fields.Integer
 })
-
-
-def format_ata_response(row):
-    if not row:
-        return None
-    return {
-        'id': row[0],
-        'project_id': row[1],
-        'file_id': row[2],
-        'student_name': row[3],
-        'title': row[4],
-        'result': row[5],
-        'location': row[6],
-        'started_at': row[7].isoformat() if row[7] else None,
-        'created_at': row[8].isoformat() if row[8] else None,
-        'created_by': row[9]
-    }
-
 
 project_model = project_ns.model('Project', {
     'id': fields.Integer(description='ID do projeto'),
@@ -132,7 +98,6 @@ project_search_model = project_ns.model('ProjectSearch', {
     'end_date': fields.String(description='Data final (YYYY-MM-DD)'),
 })
 
-# ===== Files models/helpers =====
 file_model = project_ns.model('ProjectFile', {
     'id': fields.Integer,
     'project_id': fields.Integer,
@@ -143,6 +108,34 @@ file_model = project_ns.model('ProjectFile', {
     'uploaded_by': fields.Integer,
     'created_at': fields.DateTime
 })
+
+def user_can_manage_project(user_id, project_id):
+    user = User.find_by_id(user_id)
+    if not user:
+        return False
+    if user.authority == 'admin':
+        return True
+    teacher = Teacher.select_teacher_by_user_id(user_id)
+    if not teacher:
+        return False
+    return Project.check_teacher_in_project_with_role(project_id, teacher[0], 'advisor')
+
+
+def format_ata_response(row):
+    if not row:
+        return None
+    return {
+        'id': row[0],
+        'project_id': row[1],
+        'file_id': row[2],
+        'student_name': row[3],
+        'title': row[4],
+        'result': row[5],
+        'location': row[6],
+        'started_at': row[7].isoformat() if row[7] else None,
+        'created_at': row[8].isoformat() if row[8] else None,
+        'created_by': row[9]
+    }
 
 
 def format_file_response(row):
@@ -162,7 +155,6 @@ def format_file_response(row):
 
 def get_project_upload_dir(project_id: int) -> str:
     base = Config.UPLOAD_FOLDER if hasattr(Config, 'UPLOAD_FOLDER') else 'uploads'
-    # Resolve repo root: <repo>/source/api/project.py -> go up two levels
     api_dir = os.path.dirname(os.path.abspath(__file__))
     repo_root = os.path.abspath(os.path.join(api_dir, '..', '..'))
     path = os.path.join(repo_root, base, 'projects', str(project_id))
@@ -220,10 +212,8 @@ class ProjectAtas(Resource):
         started_at = data.get('started_at')
         if not file_id or not title or result not in ['aprovado', 'reprovado', 'pendente']:
             return make_response(jsonify({'success': False, 'message': 'Payload inválido'}), 400)
-        # Check project exists
         if not Project.check_project_exists(project_id):
             return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
-        # Check file ownership
         if not DefenseMinutes.validate_file_ownership(project_id, file_id):
             return make_response(jsonify({'success': False, 'message': 'Arquivo não pertence ao projeto'}), 404)
         ata_id = DefenseMinutes.insert(project_id, file_id, student_name, title, result, location, started_at,
@@ -281,14 +271,11 @@ class ProjectList(Resource):
             if user:
                 if user.authority == 'student':
                     result = Project.select_projects_by_student(user.id, status)
-                    projects = result if result and result not in (0, "0") else []
                 elif user.authority == 'teacher':
                     result = Project.select_projects_by_teacher(user.id, status)
-                    projects = result if result and result not in (0, "0") else []
                 else:
-                    # Admin vê todos
                     result = Project.select_all_projects(status)
-                    projects = result if result and result not in (0, "0") else []
+                projects = result if result and result not in (0, "0") else []
             response = [format_project_response(project) for project in projects]
             return make_response(jsonify({
                 'success': True,
@@ -318,7 +305,6 @@ class ProjectList(Resource):
 
             name = data.get('name', '').strip()
             description = data.get('description', '').strip() or None
-            # Aceita tanto course_id quanto courseId
             course_id = data.get('course_id') or data.get('courseId')
             observation = data.get('observation', '').strip() or None
             status = data.get('status', 'Pré-projeto')
@@ -332,7 +318,6 @@ class ProjectList(Resource):
             project_id = Project.insert_project(name, description, course_id, observation, status)
 
             if project_id:
-                # Se for professor, adiciona ele como orientador do projeto
                 user = User.find_by_id(current_user_id)
                 if user and user.authority == 'teacher':
                     teacher = Teacher.select_teacher_by_user_id(current_user_id)
@@ -411,25 +396,19 @@ class ProjectDetail(Resource):
             observation = data.get('observation') if isinstance(data, dict) and 'observation' in data else None
             status = data.get('status') if isinstance(data, dict) and 'status' in data else None
 
-            # Atualiza projeto
             updated = Project.update_project(project_id, name, description, course_id, observation, status)
 
-            # Se status for Concluído/Finalizado, marcar alunos do projeto como "formado"
-            normalized_status = None
             try:
                 normalized_status = status.strip().lower() if isinstance(status, str) else None
             except Exception:
                 normalized_status = None
 
             did_grad = False
-            if normalized_status in ('concluído', 'concluido', 'finalizado'):
+            if normalized_status in ('concluído', 'finalizado'):
                 try:
-                    # Atualiza status dos alunos vinculados ao projeto
-                    from models.student_model import Student
                     Student.set_status_by_project(project_id, 'formado')
                     did_grad = True
                 except Exception:
-                    # não quebra a atualização do projeto se falhar
                     did_grad = False
 
             if updated or did_grad:
@@ -456,7 +435,6 @@ class ProjectDetail(Resource):
     def delete(self, current_user_id, project_id):
         """Remove um projeto"""
         try:
-            # Apenas admin ou orientador do projeto podem remover
             if not user_can_manage_project(current_user_id, project_id):
                 return make_response(jsonify({
                     'success': False,
@@ -587,21 +565,17 @@ class ProjectGuests(Resource):
             added = []
             warnings = []
             for guest_id in guest_ids:
-                # validar professor
                 if not Teacher.select_teacher_by_id(guest_id):
                     warnings.append({'id': guest_id, 'message': 'Professor inválido'})
                     continue
-                # não pode ser orientador
                 if Project.check_teacher_in_project_with_role(project_id, guest_id, 'advisor'):
                     return make_response(jsonify({'success': False, 'message': 'Professor já é orientador do projeto'}),
                                          400)
-                # idempotente: pular se já é guest
                 if Project.check_teacher_in_project_with_role(project_id, guest_id, 'guest'):
                     continue
                 if Project.add_teacher_to_project_with_role(project_id, guest_id, 'guest'):
                     added.append(guest_id)
 
-            # retornar lista de convidados atual
             guests = Project.get_project_teachers_by_role(project_id, 'guest')
             return make_response(jsonify({
                 'success': True,
@@ -624,7 +598,6 @@ class ProjectGuestDetail(Resource):
             if not Project.check_project_exists(project_id):
                 return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
 
-            # precisa existir como guest
             if not Project.check_teacher_in_project_with_role(project_id, guest_id, 'guest'):
                 return make_response(jsonify({'success': False, 'message': 'Convidado não encontrado'}), 404)
 
@@ -813,7 +786,6 @@ class ProjectReportDetail(Resource):
             local = data.get('local') if 'local' in data else None
             feedback = data.get('feedback') if 'feedback' in data else None
 
-            # Definir teacher_id apenas se usuário for professor
             _t = Teacher.select_teacher_by_user_id(current_user_id)
             teacher_id = _t[0] if _t and _t != 0 else None
 
@@ -842,7 +814,6 @@ class ProjectReportDetail(Resource):
     def delete(self, current_user_id, project_id, report_id):
         """Remove um relatório do projeto"""
         try:
-            # Apenas admin ou orientador do projeto podem remover relatório
             if not user_can_manage_project(current_user_id, project_id):
                 return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
             if not Project.check_project_exists(project_id):
@@ -905,7 +876,6 @@ class ProjectStatistics(Resource):
             }), 500)
 
 
-# ===== Files endpoints =====
 @project_ns.route('/<int:project_id>/files')
 class ProjectFiles(Resource):
     @token_required
@@ -929,7 +899,6 @@ class ProjectFiles(Resource):
                 return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
 
             if 'files[]' not in request.files:
-                # também aceitar 'files' simples
                 if 'files' not in request.files:
                     return make_response(jsonify({'success': False, 'message': 'Nenhum arquivo enviado'}), 400)
                 files = request.files.getlist('files')
@@ -964,24 +933,20 @@ class ProjectFilesBulkDelete(Resource):
     def post(self, current_user_id, project_id):
         """Remove múltiplos arquivos do projeto (best-effort)"""
         try:
-            # AuthZ: apenas admin/teacher
             user = User.find_by_id(current_user_id)
             if not user or user.authority not in ('admin', 'teacher'):
                 return make_response(jsonify({'success': False, 'message': 'Não autorizado'}), 403)
 
-            # Projeto precisa existir
             if not Project.check_project_exists(project_id):
                 return make_response(jsonify({'success': False, 'message': 'Projeto não encontrado'}), 404)
 
             data = get_json_data()
             file_ids = data.get('file_ids') if isinstance(data, dict) else None
 
-            # Validação do payload
             if not isinstance(file_ids, list) or not file_ids:
                 return make_response(jsonify({'success': False, 'message': 'file_ids deve ser uma lista não vazia'}),
                                      400)
 
-            # Normaliza ids para inteiros válidos
             try:
                 file_ids = [int(x) for x in file_ids]
             except Exception:
@@ -994,16 +959,13 @@ class ProjectFilesBulkDelete(Resource):
             for fid in file_ids:
                 try:
                     row = ProjectFile.get_by_id(fid)
-                    # ownership: arquivo precisa pertencer ao projeto
                     if not row or row[1] != project_id:
                         failed.append(fid)
                         continue
 
                     stored_name = row[3]
                     abs_path = os.path.join(upload_dir, stored_name)
-                    # Apaga do banco primeiro
                     ok_db = ProjectFile.delete_by_id(fid)
-                    # Tenta apagar o arquivo físico (não falha se já não existir)
                     try:
                         if os.path.exists(abs_path):
                             os.remove(abs_path)
@@ -1043,7 +1005,6 @@ class ProjectFileDownload(Resource):
 
             filename = row[2]
             response = make_response(send_file(abs_path, as_attachment=True, download_name=filename))
-            # Garantir header com nome em UTF-8
             response.headers['Content-Disposition'] = f"attachment; filename*=UTF-8''{quote(filename)}"
             return response
         except Exception as e:
@@ -1062,9 +1023,7 @@ class ProjectFileDelete(Resource):
 
             upload_dir = get_project_upload_dir(project_id)
             abs_path = os.path.join(upload_dir, row[3])
-            # Apaga do banco primeiro
             ok = ProjectFile.delete_by_id(file_id)
-            # Tenta apagar o arquivo físico (não falha se já não existir)
             try:
                 if os.path.exists(abs_path):
                     os.remove(abs_path)

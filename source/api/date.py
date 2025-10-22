@@ -108,7 +108,6 @@ class DateStatusList(Resource):
         try:
             data = get_json_data()
 
-
             if not data or 'date' not in data:
                 return make_response(jsonify({
                     'success': False,
