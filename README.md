@@ -2,8 +2,6 @@
 
 API REST para gerenciamento de projetos de TCC (Trabalho de Conclusão de Curso), desenvolvida com Flask e MySQL.
 
-Documentação detalhada dos endpoints está em docs/DOCUMENTATION_API.md.
-
 ## Funcionalidades
 
 - **Autenticação**: Sistema de login com JWT

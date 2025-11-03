@@ -359,20 +359,28 @@ class Project:
 
     @staticmethod
     def insert_report(project_id, description, teacher_id=None, pendency=None,
-                      status='pendente', next_steps=None, local=None, feedback=None):
+                      status='pendente', next_steps=None, local=None, feedback=None, created_at=None):
         """Insere um novo relatório no projeto"""
-        query = """
-            INSERT INTO report (project_id, description, teacher_id, 
-                                        pendency, status, next_steps, local, feedback)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        result = send_sql_command(query, (project_id, description, teacher_id,
-                                              pendency, status, next_steps, local, feedback))
+        if created_at is not None:
+            query = """
+                INSERT INTO report (project_id, description, teacher_id, 
+                                            pendency, status, next_steps, local, feedback, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            params = (project_id, description, teacher_id, pendency, status, next_steps, local, feedback, created_at)
+        else:
+            query = """
+                INSERT INTO report (project_id, description, teacher_id, 
+                                            pendency, status, next_steps, local, feedback)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            params = (project_id, description, teacher_id, pendency, status, next_steps, local, feedback)
+        result = send_sql_command(query, params)
         return result if result else None
 
     @staticmethod
     def update_report(report_id, description=None, pendency=None, status=None,
-                      next_steps=None, local=None, feedback=None, teacher_id=None):
+                      next_steps=None, local=None, feedback=None, teacher_id=None, created_at=None):
         """Atualiza um relatório"""
         updates = []
         params = []
@@ -405,6 +413,10 @@ class Project:
         if teacher_id is not None:
             updates.append("teacher_id = %s")
             params.append(teacher_id)
+
+        if created_at is not None:
+            updates.append("created_at = %s")
+            params.append(created_at)
 
         if not updates:
             return False

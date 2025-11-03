@@ -39,14 +39,16 @@ class Course:
         """
         if status == 'all':
             query = """
-                SELECT id, name, observation, status, created_at, updated_at 
+                SELECT id, name, observation, status, created_at, updated_at, 
+                       responsible_teacher_name, responsible_signature_url
                 FROM course 
                 ORDER BY name ASC
             """
             return send_sql_command(query)
         else:
             query = """
-                SELECT id, name, observation, status, created_at, updated_at 
+                SELECT id, name, observation, status, created_at, updated_at,
+                       responsible_teacher_name, responsible_signature_url
                 FROM course 
                 WHERE status = %s
                 ORDER BY name ASC
@@ -65,7 +67,8 @@ class Course:
             tuple: Dados do curso ou None se não encontrado
         """
         query = """
-            SELECT id, name, observation, status, created_at, updated_at 
+            SELECT id, name, observation, status, created_at, updated_at,
+                   responsible_teacher_name, responsible_signature_url
             FROM course 
             WHERE id = %s
         """
@@ -136,28 +139,30 @@ class Course:
             return Course.select_all_courses(status)
 
     @staticmethod
-    def insert_course(name, observation=None):
+    def insert_course(name, observation=None, responsible_teacher_name=None, responsible_signature_url=None):
         """
         Insere um novo curso
 
         Args:
             name (str): Nome do curso
             observation (str, optional): Observação sobre o curso
+            responsible_teacher_name (str, optional): Nome do professor responsável
+            responsible_signature_url (str, optional): URL da assinatura
 
         Returns:
             int: ID do curso inserido ou None em caso de erro
         """
         query = """
-            INSERT INTO course (name, observation, status) 
-            VALUES (%s, %s, 'ativo')
+            INSERT INTO course (name, observation, status, responsible_teacher_name, responsible_signature_url) 
+            VALUES (%s, %s, 'ativo', %s, %s)
         """
-        result = send_sql_command(query, (name, observation))
+        result = send_sql_command(query, (name, observation, responsible_teacher_name, responsible_signature_url))
         # print("-" * 10)
         # print(result)
         return result if result != 0 else None
 
     @staticmethod
-    def update_course(course_id, name=None, observation=None):
+    def update_course(course_id, name=None, observation=None, responsible_teacher_name=None, responsible_signature_url=None):
         """
         Atualiza os dados de um curso
 
@@ -165,6 +170,8 @@ class Course:
             course_id (int): ID do curso
             name (str, optional): Novo nome do curso
             observation (str, optional): Observação sobre o curso
+            responsible_teacher_name (str, optional): Nome do professor responsável
+            responsible_signature_url (str, optional): URL da assinatura
 
         Returns:
             bool: True se atualizado com sucesso, False caso contrário
@@ -179,6 +186,14 @@ class Course:
         if observation is not None:
             updates.append("observation = %s")
             params.append(observation)
+
+        if responsible_teacher_name is not None:
+            updates.append("responsible_teacher_name = %s")
+            params.append(responsible_teacher_name)
+
+        if responsible_signature_url is not None:
+            updates.append("responsible_signature_url = %s")
+            params.append(responsible_signature_url)
 
         if not updates:
             return False
@@ -285,16 +300,10 @@ class Course:
             bool: True se já existe um curso com este nome
         """
         if exclude_id:
-            query = """
-                SELECT id FROM course 
-                WHERE name = %s AND id != %s
-            """
+            query = """SELECT id FROM course WHERE name = %s AND id != %s"""
             result = send_sql_command(query, (name, exclude_id))
         else:
-            query = """
-                SELECT id FROM course 
-                WHERE name = %s
-            """
+            query = """SELECT id FROM course WHERE name = %s"""
             result = send_sql_command(query, (name,))
 
         return result != 0

@@ -11,7 +11,7 @@ class Student:
             list: Lista de tuplas com os dados dos alunos
         """
         query = """
-            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone 
             FROM students 
             ORDER BY name ASC
         """
@@ -29,7 +29,7 @@ class Student:
              list: Lista de tuplas com os dados dos alunos
          """
         query = """
-            SELECT s.id, s.name, s.registration, s.observation, s.image, s.status, s.user_id, s.created_at, s.updated_at 
+            SELECT s.id, s.name, s.registration, s.observation, s.image, s.status, s.user_id, s.created_at, s.updated_at, s.telephone 
             FROM students s
             INNER JOIN student_project sp ON s.id = sp.student_id
             WHERE sp.project_id = %s
@@ -49,7 +49,7 @@ class Student:
             tuple: Dados do aluno ou None se não encontrado
         """
         query = """
-            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone 
             FROM students 
             WHERE id = %s
         """
@@ -68,7 +68,7 @@ class Student:
             list: Lista de alunos encontrados
         """
         query = """
-            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone 
             FROM students 
             WHERE name LIKE %s
             ORDER BY name ASC
@@ -90,7 +90,7 @@ class Student:
         """
         if start_date and end_date:
             query = """
-                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at 
+                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone 
                 FROM students 
                 WHERE DATE(created_at) BETWEEN %s AND %s
                 ORDER BY created_at DESC
@@ -98,7 +98,7 @@ class Student:
             return send_sql_command(query, (start_date, end_date))
         elif start_date:
             query = """
-                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at
+                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone
                 FROM students 
                 WHERE DATE(created_at) >= %s
                 ORDER BY created_at DESC
@@ -106,7 +106,7 @@ class Student:
             return send_sql_command(query, (start_date))
         elif end_date:
             query = """
-                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at
+                SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone
                 FROM students 
                 WHERE DATE(created_at) <= %s
                 ORDER BY created_at DESC
@@ -232,6 +232,28 @@ class Student:
         return True
 
     @staticmethod
+    def update_registration(student_id, registration):
+        """Atualiza o RA do aluno"""
+        query = """
+            UPDATE students
+            SET registration = %s
+            WHERE id = %s
+        """
+        send_sql_command(query, (registration, student_id))
+        return True
+
+    @staticmethod
+    def update_telephone(student_id, telephone):
+        """Atualiza o telefone do aluno"""
+        query = """
+            UPDATE students
+            SET telephone = %s
+            WHERE id = %s
+        """
+        send_sql_command(query, (telephone, student_id))
+        return True
+
+    @staticmethod
     def set_status_by_project(project_id, status):
         """Atualiza o status (coluna students.status) de todos os alunos de um projeto"""
         query = (
@@ -319,16 +341,10 @@ class Student:
         if student_id:
             student = Student.select_student_by_id(student_id)
             if student:
-                query = """
-                    SELECT id FROM users 
-                    WHERE username = %s AND id != %s
-                """
+                query = """SELECT id FROM users WHERE username = %s AND id != %s"""
                 result = send_sql_command(query, (email, student[6]))
         else:
-            query = """
-                SELECT id FROM users 
-                WHERE username = %s
-            """
+            query = """SELECT id FROM users WHERE username = %s"""
             result = send_sql_command(query, (email,))
         return result != 0
 

@@ -341,15 +341,9 @@ class Teacher:
         if teacher_id:
             teacher = Teacher.select_teacher_by_id(teacher_id)
             if teacher:
-                query = """
-                    SELECT id FROM users 
-                    WHERE username = %s AND id != %s
-                """
+                query = """SELECT id FROM users WHERE username = %s AND id != %s"""
                 result = send_sql_command(query, (email, teacher[4]))
         else:
-            query = """
-                SELECT id FROM users 
-                WHERE username = %s
-            """
+            query = """SELECT id FROM users WHERE username = %s"""
             result = send_sql_command(query, (email,))
         return result != 0

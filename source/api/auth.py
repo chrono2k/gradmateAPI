@@ -48,11 +48,6 @@ user_reset_password_model = auth_ns.model('UserResetPassword', {
     'password': fields.String(required=True, description='Nova senha')
 })
 
-user_change_password_model = auth_ns.model('UserChangePassword', {
-    'currentPassword': fields.String(required=True, description='Senha atual'),
-    'newPassword': fields.String(required=True, description='Nova senha')
-})
-
 
 @auth_ns.route('/login/')
 class Login(Resource):
@@ -189,33 +184,3 @@ class AdminUserPassword(Resource):
             return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
         User.update_password(user_id, generate_password_hash(password))
         return make_response(jsonify({'success': True, 'message': 'Senha redefinida'}), 200)
-
-
-@auth_ns.route('/user/password')
-class CurrentUserPassword(Resource):
-    @token_required
-    @auth_ns.expect(user_change_password_model)
-    def post(self, current_user_id):
-        """Altera a senha do usuário autenticado"""
-        data = get_json_data()
-        current_password = data.get('currentPassword')
-        new_password = data.get('newPassword')
-
-        if not current_password or not new_password:
-            return make_response(jsonify({'success': False, 'message': 'currentPassword e newPassword são obrigatórios'}), 400)
-
-        user = User.find_by_id(current_user_id)
-        if not user:
-            return make_response(jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404)
-
-        if user.status != 'ativo':
-            return make_response(jsonify({'success': False, 'message': 'Usuário inativo'}), 403)
-
-        if not check_password_hash(user.password_hash, current_password):
-            return make_response(jsonify({'success': False, 'message': 'Senha atual inválida'}), 400)
-
-        if current_password == new_password:
-            return make_response(jsonify({'success': False, 'message': 'A nova senha deve ser diferente da atual'}), 400)
-
-        User.update_password(user.id, generate_password_hash(new_password))
-        return make_response(jsonify({'success': True, 'message': 'Senha atualizada com sucesso'}), 200)

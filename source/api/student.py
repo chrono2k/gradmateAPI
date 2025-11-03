@@ -15,6 +15,7 @@ student_model = student_ns.model('Student', {
     'observation': fields.String(description='Observação sobre o aluno'),
     'image': fields.String(description='Imagem do aluno'),
     'status': fields.String(description='Status do aluno'),
+    'telephone': fields.String(description='Telefone do aluno'),
     'user_id': fields.String(description='Id do usuário do aluno'),
     'created_at': fields.DateTime(description='Data de criação'),
     'updated_at': fields.DateTime(description='Data de atualização')
@@ -34,6 +35,7 @@ student_update_model = student_ns.model('StudentUpdate', {
     'email': fields.String(description='Novo email do aluno'),
     'observation': fields.String(description='Nova observação'),
     'registration': fields.String(description='Ra do aluno'),
+    'telephone': fields.String(description='Telefone do aluno'),
     'image': fields.String(description='Nova imagem')
 })
 
@@ -69,6 +71,7 @@ def format_student_response(student_data):
         'observation': student_data[3],
         'image': student_data[4],
         'status': student_data[5],
+        'telephone': student_data[9] if len(student_data) > 9 else None,
         'user': User.select_user_by_id(student_data[6]).to_dict(),
         'created_at': student_data[7].isoformat() if student_data[7] else None,
         'updated_at': student_data[8].isoformat() if student_data[8] else None
@@ -135,11 +138,11 @@ class StudentList(Resource):
                     'message': 'RA do aluno é obrigatório'
                 }), 400)
 
-            name = data.get('name', '').strip()
-            email = data.get('email', '').strip()
-            registration = data.get('registration', '').strip()
-            observation = data.get('observation', '').strip() or None
-            image = data.get('image', '').strip() or None
+            name = (data.get('name') or '').strip()
+            email = (data.get('email') or '').strip()
+            registration = (data.get('registration') or '').strip()
+            observation = (data.get('observation') or '').strip() or None
+            image = (data.get('image') or '').strip() or None
 
             if len(name) < 3:
                 return make_response(jsonify({
@@ -205,11 +208,13 @@ class StudentList(Resource):
                 }), 400)
 
             student_id = data.get('id')
-            name = data.get('name', '').strip() if 'name' in data else None
-            email = data.get('email', '').strip() if 'email' in data else None
-            registration = data.get('registration', '').strip() if 'registration' in data else None
-            observation = data.get('observation', '').strip() if 'observation' in data else None
-            image = data.get('image', '').strip() if 'image' in data else None
+            name = (data.get('name') or '').strip() if 'name' in data and data.get('name') else None
+            email = (data.get('email') or '').strip() if 'email' in data and data.get('email') else None
+            registration = (data.get('registration') or '').strip() if 'registration' in data and data.get('registration') else None
+            telephone = (data.get('telephone') or '').strip() if 'telephone' in data and data.get('telephone') else None
+            observation = (data.get('observation') or '').strip() if 'observation' in data and data.get('observation') else None
+            image = (data.get('image') or '').strip() if 'image' in data and data.get('image') else None
+            
             if not Student.check_student_exists(student_id):
                 return make_response(jsonify({
                     'success': False,
@@ -235,9 +240,12 @@ class StudentList(Resource):
                         'success': False,
                         'message': 'Já existe outro aluno com este RA'
                     }), 409)
-                Student.update_email(student_id, email)
+                Student.update_registration(student_id, registration)
+            
+            if telephone is not None:
+                Student.update_telephone(student_id, telephone)
 
-            Student.update_observation_and_image(student_id, observation,image)
+            Student.update_observation_and_image(student_id, observation, image)
             return make_response(jsonify({
                 'success': True,
                 'message': 'Aluno atualizado com sucesso!'
