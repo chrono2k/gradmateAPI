@@ -91,6 +91,7 @@ class StudentList(Resource):
         """Lista todos os alunos"""
         try:
             students = Student.select_all_student()
+            print(students)
             response = [format_student_response(student) for student in students]
 
             return make_response(jsonify({
@@ -100,6 +101,7 @@ class StudentList(Resource):
             }), 200)
 
         except Exception as e:
+            print("deu erro")
             return make_response(jsonify({
                 'success': False,
                 'message': 'Erro ao buscar alunos',

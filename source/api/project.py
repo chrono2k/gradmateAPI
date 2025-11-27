@@ -339,6 +339,11 @@ class ProjectList(Resource):
                     if teacher and teacher != 0:
                         teacher_id = teacher[0]
                         Project.add_teacher_to_project_with_role(project_id, teacher_id, 'advisor')
+                if user and user.authority == 'student':
+                    student = Student.select_student_by_user_id(current_user_id)
+                    if student and student != 0:
+                        student_id = student[0]
+                        Project.add_student_to_project(project_id, student_id)
 
                 return make_response(jsonify({
                     'success': True,

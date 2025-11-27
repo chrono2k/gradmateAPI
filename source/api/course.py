@@ -107,6 +107,7 @@ class CourseList(Resource):
             }), 200)
 
         except Exception as e:
+            print(f"Erro ao formatar projeto: {e}")
             return make_response(jsonify({
                 'success': False,
                 'message': 'Erro ao buscar cursos',

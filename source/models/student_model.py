@@ -57,6 +57,25 @@ class Student:
         return result[0] if result != 0 else None
 
     @staticmethod
+    def select_student_by_user_id(user_id):
+        """
+        Busca um aluno específico por ID
+
+        Args:
+            student_id (int): ID do aluno
+
+        Returns:
+            tuple: Dados do aluno ou None se não encontrado
+        """
+        query = """
+            SELECT id, name, registration, observation, image, status, user_id, created_at, updated_at, telephone
+            FROM students
+            WHERE user_id = %s
+        """
+        result = send_sql_command(query, (user_id,))
+        return result[0] if result != 0 else None
+
+    @staticmethod
     def select_student_by_name(name):
         """
         Busca aluno por nome (busca parcial)
