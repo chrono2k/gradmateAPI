@@ -18,6 +18,8 @@ migrations = [
     "015_add_name_to_users",
     "016_alter_defense_minutes_student_name_nullable",
     "017_alter_defense_minutes_file_fk_set_null",
+    "018_add_year_and_ata_number_defense_minutes",
+    "019_add_responsible_teacher_signature_to_courses"
 
 ]
 
